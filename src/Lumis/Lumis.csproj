@@ -13,6 +13,10 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/hotamachisubaru-git/LumisAPI</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/hotamachisubaru-git/LumisAPI</PackageProjectUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Raylib-cs" Version="8.1.0" />
