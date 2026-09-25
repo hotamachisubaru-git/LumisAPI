@@ -1,0 +1,93 @@
+[
+  {
+    "id": "todo-1790320382628-t140",
+    "content": "1. Directory.Build.propsのTargetFramework設定確認（既に不要な設定がないか確認）",
+    "status": "completed",
+    "createdAt": 1790320382628,
+    "updatedAt": 1790320387373
+  },
+  {
+    "id": "todo-1790320382628-w5l4",
+    "content": "2. src/Lumis/Lumis.csprojのTargetFrameworks設定確認",
+    "status": "completed",
+    "createdAt": 1790320382628,
+    "updatedAt": 1790320387377
+  },
+  {
+    "id": "todo-1790320382628-02bx",
+    "content": "3. samples/HelloLumis/HelloLumis.csprojのTargetFramework設定確認",
+    "status": "completed",
+    "createdAt": 1790320382628,
+    "updatedAt": 1790320389991
+  },
+  {
+    "id": "todo-1790320382628-pe1u",
+    "content": "4. NativeSmokeテストのTargetFramework設定確認",
+    "status": "completed",
+    "createdAt": 1790320382628,
+    "updatedAt": 1790320389995
+  },
+  {
+    "id": "todo-1790320382628-n8qk",
+    "content": "5. Unit TestsのTargetFramework設定確認",
+    "status": "completed",
+    "createdAt": 1790320382628,
+    "updatedAt": 1790320390000
+  },
+  {
+    "id": "todo-1790320382628-1r03",
+    "content": "6. GitHub Repository Metadata追加（URL未確定のためスキップ確認）",
+    "status": "completed",
+    "createdAt": 1790320382628,
+    "updatedAt": 1790320391984
+  },
+  {
+    "id": "todo-1790320382628-ges1",
+    "content": "7. Public APIからRaylib-cs型が漏れていないことを監査",
+    "status": "completed",
+    "createdAt": 1790320382628,
+    "updatedAt": 1790320395352
+  },
+  {
+    "id": "todo-1790320382628-t9i9",
+    "content": "8. リソース寿命・終了処理の監査",
+    "status": "completed",
+    "createdAt": 1790320382628,
+    "updatedAt": 1790320400676
+  },
+  {
+    "id": "todo-1790320382628-ydkj",
+    "content": "9. Releaseビルド・テスト・packを実行",
+    "status": "completed",
+    "createdAt": 1790320382628,
+    "updatedAt": 1790320424517
+  },
+  {
+    "id": "todo-1790320382628-n2j6",
+    "content": "10. NuGetパッケージ内容を確認（DLL, XML, README, LICENSEなど）",
+    "status": "completed",
+    "createdAt": 1790320382628,
+    "updatedAt": 1790320424526
+  },
+  {
+    "id": "todo-1790320382628-qvlu",
+    "content": "11. HelloLumis実行確認",
+    "status": "completed",
+    "createdAt": 1790320382628,
+    "updatedAt": 1790320473327
+  },
+  {
+    "id": "todo-1790320382628-c1jm",
+    "content": "12. CI設定を確認",
+    "status": "completed",
+    "createdAt": 1790320382628,
+    "updatedAt": 1790320477025
+  },
+  {
+    "id": "todo-1790320382628-79r5",
+    "content": "13. 最終報告を出力",
+    "status": "completed",
+    "createdAt": 1790320382628,
+    "updatedAt": 1790320477718
+  }
+]

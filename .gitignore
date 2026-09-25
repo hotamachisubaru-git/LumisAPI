@@ -1,0 +1,35 @@
+# .NET build output
+**/bin/
+**/obj/
+artifacts/
+TestResults/
+*.nupkg
+*.snupkg
+
+# Test / coverage output
+coverage/
+coverage.*
+*.coverage
+*.coveragexml
+
+# Benchmarks
+BenchmarkDotNet.Artifacts/
+
+# Logs
+*.log
+
+# IDE and user settings
+.vs/
+.idea/
+*.user
+*.suo
+*.sln.docstates
+
+# OS files and local secrets
+.DS_Store
+Thumbs.db
+.env
+.env.*
+!.env.example
+*.pfx
+*.snk
