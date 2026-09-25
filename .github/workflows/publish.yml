@@ -1,0 +1,36 @@
+name: Publish to NuGet
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Build and publish to NuGet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore LumisAPI.sln
+
+      - name: Build
+        run: dotnet build LumisAPI.sln -c Release --no-restore
+
+      - name: Test
+        run: dotnet test LumisAPI.sln -c Release --no-build
+
+      - name: Pack
+        run: dotnet pack src/Lumis/Lumis.csproj -c Release --no-build -o artifacts/packages
+
+      - name: Publish to NuGet
+        run: dotnet nuget push artifacts/packages/*.nupkg --source https://api.nuget.org --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
