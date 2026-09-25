@@ -9,28 +9,60 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: nuget-publish
+  cancel-in-progress: false
+
 jobs:
-  publish:
-    name: Build and publish to NuGet
+  validate:
+    name: Validate release configuration
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      package_version: ${{ steps.release.outputs.package_version }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
+      - name: Check API key and release version
+        id: release
+        shell: pwsh
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:NUGET_API_KEY)) {
+            throw 'Create the repository Actions secret NUGET_API_KEY before publishing.'
+          }
+          $version = & ./.github/scripts/Get-PublishVersion.ps1
+          "package_version=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "Publishing LumisAPI $version from $env:GITHUB_REF"
 
-      - name: Restore dependencies
-        run: dotnet restore LumisAPI.sln
+  verify:
+    name: Verify release
+    needs: validate
+    uses: ./.github/workflows/ci.yml
 
-      - name: Build
-        run: dotnet build LumisAPI.sln -c Release --no-restore
-
-      - name: Test
-        run: dotnet test LumisAPI.sln -c Release --no-build
-
-      - name: Pack
-        run: dotnet pack src/Lumis/Lumis.csproj -c Release --no-build -o ./artifacts/packages
-
+  publish:
+    name: Publish verified packages to NuGet
+    needs: [validate, verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages
+          path: artifacts/packages
       - name: Publish to NuGet
-        run: dotnet nuget push artifacts/packages/*.nupkg --source https://api.nuget.org --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
+        shell: bash
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          PACKAGE_VERSION: ${{ needs.validate.outputs.package_version }}
+        run: |
+          dotnet nuget push "artifacts/packages/LumisAPI.${PACKAGE_VERSION}.nupkg" \
+            --source https://api.nuget.org/v3/index.json \
+            --api-key "$NUGET_API_KEY" \
+            --skip-duplicate

@@ -1,8 +1,10 @@
 # API and lifecycle
 
-All public types live in `Lumis`. The library targets .NET 10 and uses
-`System.Numerics.Vector2` for positions. Window and resource operations must
-stay on the main thread. Construct, run and dispose the game on that thread.
+All public types live in `Lumis`. The library targets .NET 8 and .NET 10 and
+uses `System.Numerics.Vector2` for positions. Unit tests cover both targets;
+the sample and native smoke project target .NET 10. Window and resource
+operations must stay on the main thread. Construct, run and dispose the game
+on that thread.
 `Exit()` is the only operation intended for other threads.
 
 ## Game

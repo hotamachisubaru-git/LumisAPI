@@ -6,10 +6,13 @@ Build desktop 2D games with a small, documented API backed by
 [raylib-cs](https://github.com/raylib-cs/raylib-cs) and
 [raylib](https://www.raylib.com/).
 
-**Version:** 0.1.0 · **License:** MIT · **Target:** .NET 10
+**Version:** 0.1.0 · **License:** MIT · **Library targets:** .NET 8 and .NET 10
 
-This repository is the initial implementation. The NuGet package can be built
-locally; it has not been published to nuget.org as part of this setup.
+The library targets `net8.0` and `net10.0`. Building this repository requires
+the .NET 10 SDK selected by `global.json`. The sample and native smoke checks
+run on .NET 10; the unit tests run on .NET 8 and .NET 10.
+The repository includes local packaging and a
+[NuGet release workflow](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/docs/publishing.md).
 
 ## Features
 
@@ -20,6 +23,14 @@ locally; it has not been published to nuget.org as part of this setup.
 - Scene Management — scene lifecycle callbacks and deferred transitions
 - Automatic cleanup of textures and audio resources, with game-thread checks
 - XML API documentation included in the NuGet package
+
+## Installation
+
+Add LumisAPI to a .NET 8 or .NET 10 project:
+
+```sh
+dotnet add package LumisAPI --version 0.1.0
+```
 
 ## Quick start
 
@@ -87,12 +98,6 @@ dotnet restore --source ../artifacts/packages --source https://api.nuget.org/v3/
 The raylib-cs dependency is restored from nuget.org. For a consumer outside
 this checkout, use an absolute path to `artifacts/packages`.
 
-After a maintainer publishes the package to nuget.org, installation will be:
-
-```sh
-dotnet add package LumisAPI
-```
-
 ## Repository layout
 
 ```text
@@ -116,6 +121,9 @@ LumisAPI/
 
 ## Development
 
+Install the .NET 8 runtime as well as the .NET 10 SDK to run both unit test
+targets. Installing the .NET 8 SDK also supplies that runtime.
+
 ```sh
 dotnet test LumisAPI.sln -c Release
 dotnet run --project samples/HelloLumis -c Release -- --smoke --no-audio
@@ -136,20 +144,21 @@ dotnet run --project tests/Lumis.NativeSmoke -c Release -- --no-audio
 
 Omit `--no-audio` to verify audio resource cleanup as well.
 
-CI builds and tests on Windows, Linux and macOS, and runs a Linux graphics
-smoke test under Xvfb. Native runtime testing on your target machine is still
+The CI workflow builds and tests both library targets on Windows, Linux and
+macOS, plus Linux graphics and lifecycle smoke checks under
+Xvfb. Native runtime testing on your target machine is still
 necessary. Desktop runtime assets come from raylib-cs 8.1.0 for `win-x64`,
 `win-x86`, `linux-x64`, `osx-x64`, and `osx-arm64`. This API does not currently
 support browser, mobile, Windows ARM64, or Linux ARM64 deployment.
 
-- [API and lifecycle guide](docs/api.md)
-- [Contributing and keeping main healthy](CONTRIBUTING.md)
-- [Packaging and publishing](docs/publishing.md)
-- [Local verification results (Japanese)](docs/verification.md)
-- [Changelog](CHANGELOG.md)
-- [Third-party notices](THIRD-PARTY-NOTICES.md)
+- [API and lifecycle guide](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/docs/api.md)
+- [Contributing and keeping main healthy](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/CONTRIBUTING.md)
+- [Packaging and publishing](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/docs/publishing.md)
+- [Local verification results (Japanese)](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/docs/verification.md)
+- [Changelog](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/CHANGELOG.md)
+- [Third-party notices](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/THIRD-PARTY-NOTICES.md)
 
 ## License
 
-LumisAPI and the included sample assets are licensed under the [MIT License](LICENSE).
+LumisAPI and the included sample assets are licensed under the [MIT License](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/LICENSE).
 raylib-cs and raylib retain their own zlib licenses and copyright notices.

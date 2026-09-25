@@ -52,3 +52,22 @@ dotnet pack src/Lumis/Lumis.csproj -c Release --no-build -o artifacts/packages
 
 今回のローカル実行ログと PNG は `artifacts/` に保存した。
 このディレクトリとビルド出力は Git の追跡対象外。
+
+## 2026-09-25 GitHub ワークフローの追加検証
+
+上記は 2026-09-24 の初期検証記録。以下は GitHub 公開後の追加確認。
+
+- 調査開始時のローカル HEAD と GitHub `main` はともに
+  `750ce0d7b8fce3d5ea7c7ff075c8f8b6a2ad1bb7`。
+- [そのコミットの CI](https://github.com/hotamachisubaru-git/LumisAPI/actions/runs/36107965725)
+  は Windows / Linux / macOS のビルド・テストと、Linux の描画・寿命確認がすべて成功。
+- 今回の修正後、Windows で .NET 8 / .NET 10 の単体テストが各 62 件、計 124 件成功。
+  Release ビルドは警告・エラー 0。
+- `actionlint 1.7.12` で両ワークフローの構文を確認し、診断 0。
+- 公開バージョン確認スクリプトは、ブランチ指定と正しいタグを受理し、
+  不一致タグ・不正タグ・大文字違い・参照指定なしを拒否する計 6 ケースを確認。
+- NuGet パッケージとシンボルパッケージを生成し、`net8.0` / `net10.0` の
+  DLL と XML ドキュメント、依存関係を確認。
+
+今回のワークフロー修正自体はローカルで検証したもの。修正後のリモート CI と
+nuget.org への実際の公開は、この追加確認では実行していない。
