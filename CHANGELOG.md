@@ -1,27 +1,27 @@
-# Changelog
+# 変更履歴
 
-All notable changes to LumisAPI are documented here.
-Versions follow [Semantic Versioning](https://semver.org/).
-The API may change between minor versions while the major version is zero.
+LumisAPI のすべての主要な変更はここに記録されます。
+バージョン番号は [Semantic Versioning](https://semver.org/) に従います。
+メジャーバージョンが 0 の間は、マイナーバージョン間で API が変更される場合があります。
 
 ## [Unreleased]
 
 ## [0.1.0] - 2026-09-25
 
-Initial release.
+最初のリリース。
 
-### Added
+### 追加機能
 
-- A .NET 8 and .NET 10 library with the `Lumis` namespace and NuGet package ID `LumisAPI`.
-- A configurable native window and game loop powered by raylib-cs 8.1.0.
-- 2D shapes, text, textures, screenshot capture, keyboard and mouse input.
-- Sound effects and streamed music with playback and volume controls.
-- Deferred scene transitions and explicit enter/update/draw/exit callbacks.
-- Automatic native resource cleanup and thread/lifecycle guards.
-- The HelloLumis sample with bundled, generated PNG and WAV assets.
-- Headless unit tests for both .NET targets, desktop graphics and lifecycle smoke tests,
-  Windows/Linux/macOS CI, and XML API documentation.
-- NuGet publishing that validates release tags and required `NUGET_API_KEY` configuration,
-  waits for all platform builds and tests, and publishes their verified package artifacts.
-- NuGet V3 package and symbol publishing, release instructions, and repository metadata.
-- MIT license and local NuGet packaging instructions.
+- `Lumis` ネームスペースと NuGet パッケージ ID `LumisAPI` を持つ .NET 8 および .NET 10 ライブラリ。
+- raylib-cs 8.1.0 に基づいた、カスタマイズ可能なネイティブウィンドウとゲームループ。
+- 2D 図形、テキスト、テクスチャ、スクリーンショットキャプチャ、キーボードおよびマウス入力のサポート。
+- サウンドエフェクトとストリーミング音楽の再生および音量コントロール。
+- 遅延シーン遷移と明示的な enter/update/draw/exit コールバック。
+- ネイティブリソースの自動クリーンアップとスレッド/ライフサイクルガード。
+- バンドルされた生成済み PNG および WAV アセットを備えた HelloLumis サンプル。
+- 両 .NET ターゲット向けのヘッドレスユニットテスト、デスクトップグラフィックスおよびライフサイクルのスマクテスト、
+  Windows/Linux/macOS 用の CI、XML API ドキュメント。
+- リリースタグの検証と必要な `NUGET_API_KEY` 設定の検証、
+  全プラットフォームのビルドとテストの待機、検証済みパッケージアーティファクトの公開を行う NuGet 公開機能。
+- NuGet V3 パッケージおよびシンボル公開、リリース手順、リポジトリメタデータ。
+- MIT ライセンスとローカル NuGet パッケージ化手順。
