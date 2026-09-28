@@ -14,6 +14,8 @@ public sealed class SceneManager : IDisposable
     private readonly int _ownerThreadId = Environment.CurrentManagedThreadId;
     private LumisScene? _current;
     private LumisScene? _pending;
+    private SceneTransition? _activeTransition;
+    private readonly Queue<LumisScene> _transitionQueue = new();
     private bool _disposed;
 
     /// <summary>Creates an empty scene manager on the calling thread.</summary>
@@ -31,6 +33,41 @@ public sealed class SceneManager : IDisposable
             EnsureUsable();
             return _current;
         }
+    }
+
+    /// <summary>Gets the current active transition, or <see langword="null"/> when no transition is in progress.</summary>
+    public SceneTransition? ActiveTransition => _activeTransition;
+
+    /// <summary>Gets the number of pending scene switch requests queued during an active transition.</summary>
+    public int TransitionQueueCount => _transitionQueue.Count;
+
+    /// <summary>Requests a scene to become current at the start of the next frame.</summary>
+    /// <param name="scene">The scene to activate.</param>
+    /// <param name="transition">The transition effect to apply during the switch.</param>
+    /// <remarks>
+    /// When a transition is specified, the scene switch is deferred until the transition completes.
+    /// Additional scene requests made during an active transition are queued and applied in order.
+    /// </remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="scene"/> is null.</exception>
+    /// <exception cref="ObjectDisposedException">The manager has been disposed.</exception>
+    /// <exception cref="InvalidOperationException">Called from a different thread.</exception>
+    public void Switch(LumisScene scene, SceneTransition transition)
+    {
+        EnsureUsable();
+        ArgumentNullException.ThrowIfNull(scene);
+
+        if (transition.IsComplete || transition.Duration <= 0.0f)
+        {
+            _pending = scene;
+            return;
+        }
+
+        if (_activeTransition is null)
+        {
+            _activeTransition = transition;
+        }
+
+        _transitionQueue.Enqueue(scene);
     }
 
     /// <summary>Requests a scene to become current at the start of the next frame.</summary>
@@ -53,11 +90,23 @@ public sealed class SceneManager : IDisposable
     {
         EnsureUsable();
 
+        // If a transition is active, update it and do not apply scene changes yet.
+        if (_activeTransition is not null)
+        {
+            return;
+        }
+
         LumisScene? next = _pending;
         _pending = null;
         if (next is null || ReferenceEquals(next, _current))
         {
             return;
+        }
+
+        // If the transition queue has items, start transitioning to the first one.
+        if (_transitionQueue.Count > 0)
+        {
+            next = _transitionQueue.Dequeue();
         }
 
         LumisScene? previous = _current;
@@ -82,10 +131,63 @@ public sealed class SceneManager : IDisposable
         }
     }
 
+    /// <summary>Updates the active transition and applies queued scene switches when complete.</summary>
+    /// <param name="deltaTime">Elapsed time since the last update, in seconds.</param>
+    internal void UpdateTransition(float deltaTime)
+    {
+        EnsureUsable();
+
+        if (_activeTransition is null)
+        {
+            return;
+        }
+
+        _activeTransition.Update(deltaTime);
+
+        if (_activeTransition.IsComplete)
+        {
+            _activeTransition = null;
+
+            // Apply queued scenes one at a time.
+            while (_transitionQueue.Count > 0)
+            {
+                LumisScene? next = _transitionQueue.Dequeue();
+                if (ReferenceEquals(next, _current))
+                {
+                    continue;
+                }
+
+                LumisScene? previous = _current;
+                _current = null;
+                previous?.OnExit();
+
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _current = next;
+                try
+                {
+                    next.OnEnter();
+                }
+                catch
+                {
+                    _current = null;
+                    throw;
+                }
+
+                // Only apply one queued switch per frame to keep transitions smooth.
+                break;
+            }
+        }
+    }
+
     internal void Update(float deltaTime)
     {
         EnsureUsable();
         _current?.Update(deltaTime);
+        UpdateTransition(deltaTime);
     }
 
     internal void Draw(Graphics2D graphics)
