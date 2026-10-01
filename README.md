@@ -6,7 +6,7 @@ Build desktop 2D games with a small, documented API backed by
 [raylib-cs](https://github.com/raylib-cs/raylib-cs) and
 [raylib](https://www.raylib.com/).
 
-**Version:** 0.1.0 · **License:** MIT · **Library targets:** .NET 8 and .NET 10
+**Version:** 0.1.1 · **License:** MIT · **Library targets:** .NET 8 and .NET 10
 
 The library targets `net8.0` and `net10.0`. Building this repository requires
 the .NET 10 SDK selected by `global.json`. The sample and native smoke checks
