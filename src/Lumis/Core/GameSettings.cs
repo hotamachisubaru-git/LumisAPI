@@ -24,6 +24,9 @@ public sealed record GameSettings
     /// <summary>Gets whether to initialize audio. Disable this on machines without an audio device.</summary>
     public bool EnableAudio { get; init; } = true;
 
+    /// <summary>Gets the optional anti-cheat configuration.</summary>
+    public AntiCheatSettings AntiCheat { get; init; } = new();
+
     internal void Validate()
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(Width);
@@ -33,5 +36,8 @@ public sealed record GameSettings
             throw new ArgumentException("The window title cannot contain a null character.", nameof(Title));
         if (TargetFps is < 1 or > 1000)
             throw new ArgumentOutOfRangeException(nameof(TargetFps), "TargetFps must be between 1 and 1000.");
+
+        ArgumentNullException.ThrowIfNull(AntiCheat);
+        AntiCheat.Validate();
     }
 }

@@ -27,6 +27,7 @@ public abstract class LumisGame : IDisposable
         Graphics = new Graphics2D(context);
         Input = new InputState(context);
         Audio = new AudioDevice(context);
+        AntiCheat = new AntiCheatService(Settings.AntiCheat);
     }
 
     /// <summary>Gets the immutable settings used to create the game.</summary>
@@ -41,6 +42,9 @@ public abstract class LumisGame : IDisposable
     /// <summary>Gets the sound and streamed music service.</summary>
     public AudioDevice Audio { get; }
 
+    /// <summary>Gets the anti-cheat service used by this game.</summary>
+    public AntiCheatService AntiCheat { get; }
+
     /// <summary>Gets the manager for deferred scene transitions.</summary>
     public SceneManager Scenes { get; } = new();
 
@@ -54,13 +58,19 @@ public abstract class LumisGame : IDisposable
     public int Height { get { context.EnsureActive(); return Raylib.GetScreenHeight(); } }
 
     /// <summary>Opens the window and blocks until the window closes or <see cref="Exit"/> is called.</summary>
-    /// <remarks>Exceptions from callbacks are rethrown after resources, audio, and the window are cleaned up.</remarks>
+    /// <remarks>
+    /// Enabled anti-cheat startup checks run before the native window is created.
+    /// Exceptions from callbacks are rethrown after resources, audio, and the window are cleaned up.
+    /// </remarks>
     public void Run()
     {
         ObjectDisposedException.ThrowIf(disposed, this);
         EnsureOwnerThread();
         if (hasRun)
             throw new InvalidOperationException("A game instance can only run once.");
+
+        AntiCheat.CheckStartup();
+
         if (Interlocked.CompareExchange(ref runningGame, 1, 0) != 0)
             throw new InvalidOperationException("Only one LumisGame can run at a time.");
 
