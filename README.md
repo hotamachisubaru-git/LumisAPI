@@ -21,6 +21,7 @@ The repository includes local packaging and a
 - Input — keyboard and mouse held / pressed / released states
 - Audio — sound effects, streamed music, playback controls and volume
 - Scene Management — scene lifecycle callbacks and deferred transitions
+- Anti-Cheat Level 1 — optional pre-launch blocked-process detection with built-in Cheat Engine matching
 - Automatic cleanup of textures and audio resources, with game-thread checks
 - XML API documentation included in the NuGet package
 
@@ -83,6 +84,41 @@ public class Game : LumisGame
 }
 ```
 
+## Anti-cheat Level 1
+
+Anti-cheat is disabled by default. Enable it when you want LumisAPI to scan the
+currently running process names before the native window is created. The
+built-in detector recognizes common Cheat Engine process-name variants, and
+you can add game-specific blocked process names.
+
+```csharp
+public Game() : base(new GameSettings
+{
+    AntiCheat = new AntiCheatSettings
+    {
+        Enabled = true,
+        ProcessDetection = new ProcessDetectionSettings
+        {
+            DetectCheatEngine = true,
+            BlockedProcessNames = ["MyGameTrainer"]
+        }
+    }
+})
+{
+    AntiCheat.ViolationDetected += (_, violation) =>
+        Console.Error.WriteLine(violation.Message);
+}
+```
+
+When a blocked process is detected, `Run()` raises
+`AntiCheatService.ViolationDetected` and throws `AntiCheatException` before
+the game window opens.
+
+Level 1 intentionally matches process names only. Renaming a tool can bypass
+this check, so it should be treated as an initial deterrent rather than a
+complete anti-cheat solution. Later levels can layer additional validation on
+top without changing this opt-in startup behavior.
+
 ## Install from a local package
 
 Create the package first:
@@ -107,7 +143,8 @@ LumisAPI/
 │  ├─ Graphics/
 │  ├─ Input/
 │  ├─ Audio/
-│  └─ Scene/
+│  ├─ Scene/
+│  └─ AntiCheat/
 ├─ samples/HelloLumis/
 ├─ tests/
 │  ├─ Lumis.Tests/
@@ -130,11 +167,11 @@ dotnet run --project samples/HelloLumis -c Release -- --smoke --no-audio
 dotnet pack src/Lumis/Lumis.csproj -c Release -o artifacts/packages
 ```
 
-Unit tests cover scene transitions, lifetime guards, and settings without opening
-a window. The sample's `--smoke` mode opens a real window, exercises graphics,
-input polling and scene transitions, and closes automatically. Omit
-`--no-audio` to exercise native audio as well. Add `--capture screenshot.png`
-to save a frame during the smoke run.
+Unit tests cover scene transitions, lifetime guards, settings, and anti-cheat
+matching without opening a window. The sample's `--smoke` mode opens a real
+window, exercises graphics, input polling and scene transitions, and closes
+automatically. Omit `--no-audio` to exercise native audio as well. Add
+`--capture screenshot.png` to save a frame during the smoke run.
 
 To verify sequential windows, callback failure recovery, and native cleanup:
 

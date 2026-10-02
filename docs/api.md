@@ -16,12 +16,13 @@ through `Input` when desired. The close button always ends the loop.
 
 The lifecycle is:
 
-1. Open the window and optional audio device.
-2. Call `OnLoad()` to load textures, sounds and music and request an initial scene.
-3. Each frame: apply a pending scene, call game `Update(deltaTime)`, scene
+1. Run enabled anti-cheat startup checks before native window creation.
+2. Open the window and optional audio device.
+3. Call `OnLoad()` to load textures, sounds and music and request an initial scene.
+4. Each frame: apply a pending scene, call game `Update(deltaTime)`, scene
    `Update(deltaTime)`, update music streams, clear the background, then call
    game `Draw()` and scene `Draw(Graphics2D)`.
-4. On shutdown: exit the active scene, call `OnUnload()`, release remaining
+5. On shutdown: exit the active scene, call `OnUnload()`, release remaining
    tracked resources, close audio, then close the window.
 
 `deltaTime` is elapsed time in seconds, capped at 0.25 after stalls. This is a
@@ -34,6 +35,41 @@ if cleanup also fails, all exceptions are reported in an `AggregateException`.
 `OnUnload` must handle partially initialized fields because it also runs when
 `OnLoad` fails. Call `Exit` to stop the loop or `Dispose` on the game thread to
 request a stop; cleanup completes before `Run` returns.
+
+## Anti-cheat
+
+Anti-cheat is opt-in through `GameSettings.AntiCheat`. Level 1 performs a
+pre-launch process-name scan before raylib creates the game window.
+
+```csharp
+var settings = new GameSettings
+{
+    AntiCheat = new AntiCheatSettings
+    {
+        Enabled = true,
+        ProcessDetection = new ProcessDetectionSettings
+        {
+            DetectCheatEngine = true,
+            BlockedProcessNames = ["MyGameTrainer.exe"]
+        }
+    }
+};
+```
+
+`ProcessDetectionSettings.Enabled` controls the process check itself.
+`DetectCheatEngine` enables the built-in matcher for common Cheat Engine names.
+Entries in `BlockedProcessNames` are matched case-insensitively and an optional
+`.exe` suffix is ignored.
+
+If a blocked process is found, `AntiCheat.ViolationDetected` is raised and
+`Run()` throws `AntiCheatException`. The native window, audio device and
+`OnLoad()` are not started. The exception exposes the violation type and
+detected process name.
+
+Level 1 is deliberately lightweight: it checks process names only. A renamed
+executable can bypass this layer. Treat it as an early deterrent and combine it
+with later integrity and runtime-validation levels rather than as proof that a
+client is trustworthy.
 
 ## Graphics
 
