@@ -86,9 +86,10 @@ public sealed class AntiCheatTests
 
         var failure = Assert.Throws<AntiCheatException>(service.CheckStartup);
 
-        Assert.NotNull(reported);
-        Assert.Equal(AntiCheatViolationType.BlockedProcess, reported.Type);
-        Assert.Equal("CheatEngine.exe", reported.ProcessName);
+        AntiCheatViolationEventArgs violation =
+            Assert.IsType<AntiCheatViolationEventArgs>(reported);
+        Assert.Equal(AntiCheatViolationType.BlockedProcess, violation.Type);
+        Assert.Equal("CheatEngine.exe", violation.ProcessName);
         Assert.Equal(AntiCheatViolationType.BlockedProcess, failure.Type);
         Assert.Equal("CheatEngine.exe", failure.ProcessName);
     }
