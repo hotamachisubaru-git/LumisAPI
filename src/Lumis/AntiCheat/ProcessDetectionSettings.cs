@@ -1,19 +1,19 @@
 namespace Lumis;
 
 /// <summary>Configures running-process checks performed before the native game window is created.</summary>
-public sealed record ProcessDetectionSettings
+public sealed class ProcessDetectionSettings
 {
-    /// <summary>Gets whether running-process detection is enabled.</summary>
-    public bool Enabled { get; init; } = true;
+    /// <summary>Gets or sets whether running-process detection is enabled.</summary>
+    public bool Enabled { get; set; } = true;
 
-    /// <summary>Gets whether known Cheat Engine process names are blocked.</summary>
-    public bool DetectCheatEngine { get; init; } = true;
+    /// <summary>Gets or sets whether known Cheat Engine process names are blocked.</summary>
+    public bool DetectCheatEngine { get; set; } = true;
 
     /// <summary>
-    /// Gets additional process names to block. Matching is case-insensitive and an optional
+    /// Gets or sets additional process names to block. Matching is case-insensitive and an optional
     /// <c>.exe</c> suffix is ignored.
     /// </summary>
-    public IReadOnlyList<string> BlockedProcessNames { get; init; } = Array.Empty<string>();
+    public IReadOnlyList<string> BlockedProcessNames { get; set; } = Array.Empty<string>();
 
     internal void Validate()
     {
