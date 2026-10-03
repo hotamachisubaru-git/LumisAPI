@@ -67,6 +67,42 @@ public sealed class GameSettingsTests
         Assert.Equal(nameof(ProcessDetectionSettings.BlockedProcessNames), failure.ParamName);
     }
 
+    [Fact]
+    public void InvalidRuntimeScanIntervalIsRejected()
+    {
+        var failure = Assert.Throws<ArgumentOutOfRangeException>(
+            () => new GameSettings
+            {
+                AntiCheat = new AntiCheatSettings
+                {
+                    RuntimeScanInterval = TimeSpan.Zero
+                }
+            }.Validate());
+
+        Assert.Equal(nameof(AntiCheatSettings.RuntimeScanInterval), failure.ParamName);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("bad\0path")]
+    public void InvalidBlockedPathFragmentsAreRejected(string fragment)
+    {
+        var failure = Assert.Throws<ArgumentException>(
+            () => new GameSettings
+            {
+                AntiCheat = new AntiCheatSettings
+                {
+                    ProcessDetection = new ProcessDetectionSettings
+                    {
+                        BlockedExecutablePathFragments = new[] { fragment }
+                    }
+                }
+            }.Validate());
+
+        Assert.Equal(nameof(ProcessDetectionSettings.BlockedExecutablePathFragments), failure.ParamName);
+    }
+
     public static IEnumerable<object[]> InvalidSettings()
     {
         yield return [new GameSettings { Width = 0 }, nameof(GameSettings.Width)];

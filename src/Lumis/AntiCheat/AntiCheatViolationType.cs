@@ -4,5 +4,8 @@ namespace Lumis;
 public enum AntiCheatViolationType
 {
     /// <summary>A configured or built-in blocked process was detected.</summary>
-    BlockedProcess
+    BlockedProcess,
+
+    /// <summary>An attached debugger was detected.</summary>
+    DebuggerAttached
 }

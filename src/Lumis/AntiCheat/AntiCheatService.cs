@@ -4,45 +4,90 @@ namespace Lumis;
 public sealed class AntiCheatService
 {
     private readonly AntiCheatSettings settings;
-    private readonly Func<IReadOnlyList<string>> runningProcessNamesProvider;
+    private readonly Func<IReadOnlyList<ProcessSnapshot>> runningProcessesProvider;
+    private readonly Func<bool> debuggerAttachedProvider;
+    private double runtimeScanAccumulator;
 
     internal AntiCheatService(AntiCheatSettings settings)
-        : this(settings, ProcessDetector.GetRunningProcessNames)
+        : this(
+            settings,
+            () => ProcessDetector.GetRunningProcesses(settings.ProcessDetection),
+            () => DebuggerDetector.IsDebuggerAttached(settings.DebuggerDetection))
     {
     }
 
     internal AntiCheatService(
         AntiCheatSettings settings,
-        Func<IReadOnlyList<string>> runningProcessNamesProvider)
+        Func<IReadOnlyList<ProcessSnapshot>> runningProcessesProvider,
+        Func<bool>? debuggerAttachedProvider = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        ArgumentNullException.ThrowIfNull(runningProcessNamesProvider);
+        ArgumentNullException.ThrowIfNull(runningProcessesProvider);
 
         this.settings = settings;
-        this.runningProcessNamesProvider = runningProcessNamesProvider;
+        this.runningProcessesProvider = runningProcessesProvider;
+        this.debuggerAttachedProvider = debuggerAttachedProvider ?? (() => false);
     }
 
-    /// <summary>Occurs when an enabled anti-cheat rule detects a violation.</summary>
-    /// <remarks>The startup check still aborts after this event returns.</remarks>
+    /// <summary>Occurs immediately before an enabled anti-cheat violation aborts startup or runtime execution.</summary>
     public event EventHandler<AntiCheatViolationEventArgs>? ViolationDetected;
 
     internal void CheckStartup()
     {
-        if (!settings.Enabled || !settings.ProcessDetection.Enabled)
+        Check(AntiCheatViolationPhase.Startup);
+    }
+
+    internal void Update(float deltaTime)
+    {
+        if (!settings.Enabled || !settings.MonitorDuringGame)
             return;
 
-        string? blockedProcess = ProcessDetector.FindBlockedProcess(
-            runningProcessNamesProvider(),
+        runtimeScanAccumulator += deltaTime;
+        if (runtimeScanAccumulator < settings.RuntimeScanInterval.TotalSeconds)
+            return;
+
+        runtimeScanAccumulator = 0d;
+        Check(AntiCheatViolationPhase.Runtime);
+    }
+
+    private void Check(AntiCheatViolationPhase phase)
+    {
+        if (!settings.Enabled)
+            return;
+
+        if (settings.DebuggerDetection.Enabled && debuggerAttachedProvider())
+        {
+            ThrowViolation(new AntiCheatViolationEventArgs(
+                AntiCheatViolationType.DebuggerAttached,
+                phase,
+                phase == AntiCheatViolationPhase.Startup
+                    ? "Anti-cheat blocked startup because an attached debugger was detected."
+                    : "Anti-cheat stopped the game because an attached debugger was detected."));
+        }
+
+        if (!settings.ProcessDetection.Enabled)
+            return;
+
+        ProcessSnapshot? blockedProcess = ProcessDetector.FindBlockedProcess(
+            runningProcessesProvider(),
             settings.ProcessDetection);
 
         if (blockedProcess is null)
             return;
 
-        var violation = new AntiCheatViolationEventArgs(
+        ThrowViolation(new AntiCheatViolationEventArgs(
             AntiCheatViolationType.BlockedProcess,
-            $"Anti-cheat blocked startup because process '{blockedProcess}' was detected.",
-            blockedProcess);
+            phase,
+            phase == AntiCheatViolationPhase.Startup
+                ? $"Anti-cheat blocked startup because process '{blockedProcess.Name}' was detected."
+                : $"Anti-cheat stopped the game because process '{blockedProcess.Name}' was detected.",
+            blockedProcess.Name,
+            blockedProcess.Id,
+            blockedProcess.ExecutablePath));
+    }
 
+    private void ThrowViolation(AntiCheatViolationEventArgs violation)
+    {
         ViolationDetected?.Invoke(this, violation);
         throw new AntiCheatException(violation);
     }

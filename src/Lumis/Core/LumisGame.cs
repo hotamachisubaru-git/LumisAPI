@@ -19,7 +19,7 @@ public abstract class LumisGame : IDisposable
     private int exitRequested;
 
     /// <summary>Creates a game using the supplied settings or their defaults.</summary>
-    /// <param name="settings">Window and service settings.</param>
+    /// <param name="settings">Window and service settings. Configure them before constructing the game.</param>
     protected LumisGame(GameSettings? settings = null)
     {
         Settings = settings ?? new GameSettings();
@@ -30,7 +30,7 @@ public abstract class LumisGame : IDisposable
         AntiCheat = new AntiCheatService(Settings.AntiCheat);
     }
 
-    /// <summary>Gets the immutable settings used to create the game.</summary>
+    /// <summary>Gets the settings used by this game.</summary>
     public GameSettings Settings { get; }
 
     /// <summary>Gets the drawing and texture service.</summary>
@@ -59,7 +59,8 @@ public abstract class LumisGame : IDisposable
 
     /// <summary>Opens the window and blocks until the window closes or <see cref="Exit"/> is called.</summary>
     /// <remarks>
-    /// Enabled anti-cheat startup checks run before the native window is created.
+    /// Enabled anti-cheat startup checks run before the native window is created. When runtime
+    /// monitoring is enabled, anti-cheat checks also run periodically before user update callbacks.
     /// Exceptions from callbacks are rethrown after resources, audio, and the window are cleaned up.
     /// </remarks>
     public void Run()
@@ -106,6 +107,7 @@ public abstract class LumisGame : IDisposable
             while (Volatile.Read(ref exitRequested) == 0 && !Raylib.WindowShouldClose())
             {
                 float deltaTime = Math.Clamp(Raylib.GetFrameTime(), 0f, 0.25f);
+                AntiCheat.Update(deltaTime);
                 Scenes.ApplyPending();
                 Update(deltaTime);
                 Scenes.Update(deltaTime);
