@@ -10,5 +10,8 @@ public enum AntiCheatViolationType
     DebuggerAttached,
 
     /// <summary>A protected in-memory value failed its integrity check.</summary>
-    MemoryTampering
+    MemoryTampering,
+
+    /// <summary>Game time advanced suspiciously faster than monotonic wall time.</summary>
+    TimeManipulation
 }

@@ -6,20 +6,23 @@ public sealed class AntiCheatService
     private readonly AntiCheatSettings settings;
     private readonly Func<IReadOnlyList<ProcessSnapshot>> runningProcessesProvider;
     private readonly Func<bool> debuggerAttachedProvider;
+    private readonly TimeManipulationDetector timeManipulationDetector;
     private double runtimeScanAccumulator;
 
     internal AntiCheatService(AntiCheatSettings settings)
         : this(
             settings,
             () => ProcessDetector.GetRunningProcesses(settings.ProcessDetection),
-            () => DebuggerDetector.IsDebuggerAttached(settings.DebuggerDetection))
+            () => DebuggerDetector.IsDebuggerAttached(settings.DebuggerDetection),
+            null)
     {
     }
 
     internal AntiCheatService(
         AntiCheatSettings settings,
         Func<IReadOnlyList<ProcessSnapshot>> runningProcessesProvider,
-        Func<bool>? debuggerAttachedProvider = null)
+        Func<bool>? debuggerAttachedProvider = null,
+        Func<double>? monotonicSecondsProvider = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(runningProcessesProvider);
@@ -27,6 +30,7 @@ public sealed class AntiCheatService
         this.settings = settings;
         this.runningProcessesProvider = runningProcessesProvider;
         this.debuggerAttachedProvider = debuggerAttachedProvider ?? (() => false);
+        timeManipulationDetector = new TimeManipulationDetector(settings.TimeManipulation, monotonicSecondsProvider);
     }
 
     /// <summary>Occurs immediately before an enabled anti-cheat violation aborts startup or runtime execution.</summary>
@@ -41,6 +45,14 @@ public sealed class AntiCheatService
     {
         if (!settings.Enabled || !settings.MonitorDuringGame)
             return;
+
+        if (settings.TimeManipulation.Enabled && timeManipulationDetector.Observe(deltaTime))
+        {
+            ThrowViolation(new AntiCheatViolationEventArgs(
+                AntiCheatViolationType.TimeManipulation,
+                AntiCheatViolationPhase.Runtime,
+                "Anti-cheat detected suspicious game-time acceleration."));
+        }
 
         runtimeScanAccumulator += deltaTime;
         if (runtimeScanAccumulator < settings.RuntimeScanInterval.TotalSeconds)

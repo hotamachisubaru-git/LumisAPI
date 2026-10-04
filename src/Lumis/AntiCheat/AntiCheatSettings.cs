@@ -16,6 +16,9 @@ public sealed class AntiCheatSettings
     /// <summary>Gets or sets the debugger-detection settings.</summary>
     public DebuggerDetectionSettings DebuggerDetection { get; set; } = new DebuggerDetectionSettings();
 
+    /// <summary>Gets or sets the runtime time-manipulation detection settings.</summary>
+    public TimeManipulationSettings TimeManipulation { get; set; } = new TimeManipulationSettings();
+
     /// <summary>Gets or sets whether enabled checks are repeated while the game is running.</summary>
     public bool MonitorDuringGame { get; set; } = true;
 
@@ -26,7 +29,9 @@ public sealed class AntiCheatSettings
     {
         ArgumentNullException.ThrowIfNull(ProcessDetection);
         ArgumentNullException.ThrowIfNull(DebuggerDetection);
+        ArgumentNullException.ThrowIfNull(TimeManipulation);
         ProcessDetection.Validate();
+        TimeManipulation.Validate();
 
         if (RuntimeScanInterval <= TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(RuntimeScanInterval), "RuntimeScanInterval must be greater than zero.");

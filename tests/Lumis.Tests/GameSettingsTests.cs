@@ -103,6 +103,47 @@ public sealed class GameSettingsTests
         Assert.Equal(nameof(ProcessDetectionSettings.BlockedExecutablePathFragments), failure.ParamName);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void InvalidTimeManipulationObservationWindowIsRejected(int seconds)
+    {
+        var failure = Assert.Throws<ArgumentOutOfRangeException>(
+            () => new GameSettings
+            {
+                AntiCheat = new AntiCheatSettings
+                {
+                    TimeManipulation = new TimeManipulationSettings
+                    {
+                        ObservationWindow = TimeSpan.FromSeconds(seconds)
+                    }
+                }
+            }.Validate());
+
+        Assert.Equal(nameof(TimeManipulationSettings.ObservationWindow), failure.ParamName);
+    }
+
+    [Theory]
+    [InlineData(1.0)]
+    [InlineData(0.5)]
+    [InlineData(double.PositiveInfinity)]
+    public void InvalidTimeManipulationRatioIsRejected(double ratio)
+    {
+        var failure = Assert.Throws<ArgumentOutOfRangeException>(
+            () => new GameSettings
+            {
+                AntiCheat = new AntiCheatSettings
+                {
+                    TimeManipulation = new TimeManipulationSettings
+                    {
+                        MaxGameTimeRatio = ratio
+                    }
+                }
+            }.Validate());
+
+        Assert.Equal(nameof(TimeManipulationSettings.MaxGameTimeRatio), failure.ParamName);
+    }
+
     public static IEnumerable<object[]> InvalidSettings()
     {
         yield return [new GameSettings { Width = 0 }, nameof(GameSettings.Width)];
