@@ -144,6 +144,27 @@ public sealed class GameSettingsTests
         Assert.Equal(nameof(TimeManipulationSettings.MaxGameTimeRatio), failure.ParamName);
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("00")]
+    [InlineData("not-a-hash")]
+    public void InvalidExpectedAssemblyHashIsRejected(string hash)
+    {
+        var failure = Assert.Throws<ArgumentException>(
+            () => new GameSettings
+            {
+                AntiCheat = new AntiCheatSettings
+                {
+                    AssemblyIntegrity = new AssemblyIntegritySettings
+                    {
+                        ExpectedEntryAssemblySha256 = hash
+                    }
+                }
+            }.Validate());
+
+        Assert.Equal(nameof(AssemblyIntegritySettings.ExpectedEntryAssemblySha256), failure.ParamName);
+    }
+
     public static IEnumerable<object[]> InvalidSettings()
     {
         yield return [new GameSettings { Width = 0 }, nameof(GameSettings.Width)];

@@ -16,5 +16,11 @@ public enum AntiCheatViolationType
     TimeManipulation,
 
     /// <summary>A registered file was missing or failed its integrity check.</summary>
-    FileIntegrity
+    FileIntegrity,
+
+    /// <summary>Protected save data failed authentication.</summary>
+    SaveDataTampering,
+
+    /// <summary>The entry assembly file failed its integrity check.</summary>
+    AssemblyIntegrity
 }

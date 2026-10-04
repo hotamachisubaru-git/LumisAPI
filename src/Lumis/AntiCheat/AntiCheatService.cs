@@ -7,6 +7,7 @@ public sealed class AntiCheatService
     private readonly Func<IReadOnlyList<ProcessSnapshot>> runningProcessesProvider;
     private readonly Func<bool> debuggerAttachedProvider;
     private readonly TimeManipulationDetector timeManipulationDetector;
+    private readonly AssemblyIntegrityMonitor assemblyIntegrityMonitor;
     private double runtimeScanAccumulator;
 
     internal AntiCheatService(AntiCheatSettings settings)
@@ -22,7 +23,8 @@ public sealed class AntiCheatService
         AntiCheatSettings settings,
         Func<IReadOnlyList<ProcessSnapshot>> runningProcessesProvider,
         Func<bool>? debuggerAttachedProvider = null,
-        Func<double>? monotonicSecondsProvider = null)
+        Func<double>? monotonicSecondsProvider = null,
+        Func<string?>? entryAssemblyPathProvider = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(runningProcessesProvider);
@@ -31,6 +33,7 @@ public sealed class AntiCheatService
         this.runningProcessesProvider = runningProcessesProvider;
         this.debuggerAttachedProvider = debuggerAttachedProvider ?? (() => false);
         timeManipulationDetector = new TimeManipulationDetector(settings.TimeManipulation, monotonicSecondsProvider);
+        assemblyIntegrityMonitor = new AssemblyIntegrityMonitor(settings.AssemblyIntegrity, entryAssemblyPathProvider);
         FileIntegrity = new FileIntegrityService(settings.FileIntegrity);
     }
 
@@ -116,6 +119,24 @@ public sealed class AntiCheatService
                     phase,
                     fileFailure.Message,
                     filePath: fileFailure.FilePath));
+            }
+        }
+
+        bool checkAssembly =
+            settings.AssemblyIntegrity.Enabled &&
+            ((phase == AntiCheatViolationPhase.Startup && settings.AssemblyIntegrity.CheckOnStartup) ||
+             (phase == AntiCheatViolationPhase.Runtime && settings.AssemblyIntegrity.MonitorDuringGame));
+
+        if (checkAssembly)
+        {
+            AssemblyIntegrityFailure? assemblyFailure = assemblyIntegrityMonitor.Verify();
+            if (assemblyFailure is not null)
+            {
+                ThrowViolation(new AntiCheatViolationEventArgs(
+                    AntiCheatViolationType.AssemblyIntegrity,
+                    phase,
+                    assemblyFailure.Message,
+                    filePath: assemblyFailure.FilePath));
             }
         }
     }

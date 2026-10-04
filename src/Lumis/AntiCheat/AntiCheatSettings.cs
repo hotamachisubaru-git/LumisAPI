@@ -22,6 +22,9 @@ public sealed class AntiCheatSettings
     /// <summary>Gets or sets SHA-256 file-integrity verification settings.</summary>
     public FileIntegritySettings FileIntegrity { get; set; } = new FileIntegritySettings();
 
+    /// <summary>Gets or sets entry-assembly integrity verification settings.</summary>
+    public AssemblyIntegritySettings AssemblyIntegrity { get; set; } = new AssemblyIntegritySettings();
+
     /// <summary>Gets or sets whether enabled checks are repeated while the game is running.</summary>
     public bool MonitorDuringGame { get; set; } = true;
 
@@ -34,8 +37,10 @@ public sealed class AntiCheatSettings
         ArgumentNullException.ThrowIfNull(DebuggerDetection);
         ArgumentNullException.ThrowIfNull(TimeManipulation);
         ArgumentNullException.ThrowIfNull(FileIntegrity);
+        ArgumentNullException.ThrowIfNull(AssemblyIntegrity);
         ProcessDetection.Validate();
         TimeManipulation.Validate();
+        AssemblyIntegrity.Validate();
 
         if (RuntimeScanInterval <= TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(RuntimeScanInterval), "RuntimeScanInterval must be greater than zero.");
