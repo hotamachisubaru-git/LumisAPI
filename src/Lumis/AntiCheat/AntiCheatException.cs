@@ -11,6 +11,7 @@ public sealed class AntiCheatException : InvalidOperationException
         ProcessName = violation.ProcessName;
         ProcessId = violation.ProcessId;
         ExecutablePath = violation.ExecutablePath;
+        FilePath = violation.FilePath;
     }
 
     /// <summary>Gets the type of detected violation.</summary>
@@ -27,4 +28,7 @@ public sealed class AntiCheatException : InvalidOperationException
 
     /// <summary>Gets the executable path when it could be read on the current platform.</summary>
     public string? ExecutablePath { get; }
+
+    /// <summary>Gets the protected file path when the violation is file-integrity related.</summary>
+    public string? FilePath { get; }
 }

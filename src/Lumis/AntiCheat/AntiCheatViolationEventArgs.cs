@@ -9,7 +9,8 @@ public sealed class AntiCheatViolationEventArgs : EventArgs
         string message,
         string? processName = null,
         int? processId = null,
-        string? executablePath = null)
+        string? executablePath = null,
+        string? filePath = null)
     {
         Type = type;
         Phase = phase;
@@ -17,6 +18,7 @@ public sealed class AntiCheatViolationEventArgs : EventArgs
         ProcessName = processName;
         ProcessId = processId;
         ExecutablePath = executablePath;
+        FilePath = filePath;
     }
 
     /// <summary>Gets the type of detected violation.</summary>
@@ -36,4 +38,7 @@ public sealed class AntiCheatViolationEventArgs : EventArgs
 
     /// <summary>Gets the executable path when it could be read on the current platform.</summary>
     public string? ExecutablePath { get; }
+
+    /// <summary>Gets the protected file path when the violation is file-integrity related.</summary>
+    public string? FilePath { get; }
 }

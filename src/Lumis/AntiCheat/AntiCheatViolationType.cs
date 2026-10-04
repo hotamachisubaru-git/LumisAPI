@@ -13,5 +13,8 @@ public enum AntiCheatViolationType
     MemoryTampering,
 
     /// <summary>Game time advanced suspiciously faster than monotonic wall time.</summary>
-    TimeManipulation
+    TimeManipulation,
+
+    /// <summary>A registered file was missing or failed its integrity check.</summary>
+    FileIntegrity
 }

@@ -19,6 +19,9 @@ public sealed class AntiCheatSettings
     /// <summary>Gets or sets the runtime time-manipulation detection settings.</summary>
     public TimeManipulationSettings TimeManipulation { get; set; } = new TimeManipulationSettings();
 
+    /// <summary>Gets or sets SHA-256 file-integrity verification settings.</summary>
+    public FileIntegritySettings FileIntegrity { get; set; } = new FileIntegritySettings();
+
     /// <summary>Gets or sets whether enabled checks are repeated while the game is running.</summary>
     public bool MonitorDuringGame { get; set; } = true;
 
@@ -30,6 +33,7 @@ public sealed class AntiCheatSettings
         ArgumentNullException.ThrowIfNull(ProcessDetection);
         ArgumentNullException.ThrowIfNull(DebuggerDetection);
         ArgumentNullException.ThrowIfNull(TimeManipulation);
+        ArgumentNullException.ThrowIfNull(FileIntegrity);
         ProcessDetection.Validate();
         TimeManipulation.Validate();
 
