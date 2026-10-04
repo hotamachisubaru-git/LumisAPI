@@ -7,5 +7,8 @@ public enum AntiCheatViolationType
     BlockedProcess,
 
     /// <summary>An attached debugger was detected.</summary>
-    DebuggerAttached
+    DebuggerAttached,
+
+    /// <summary>A protected in-memory value failed its integrity check.</summary>
+    MemoryTampering
 }
