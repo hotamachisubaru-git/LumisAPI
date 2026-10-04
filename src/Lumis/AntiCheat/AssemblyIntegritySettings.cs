@@ -27,8 +27,12 @@ public sealed class AssemblyIntegritySettings
 
     internal void Validate()
     {
-        if (string.IsNullOrWhiteSpace(ExpectedEntryAssemblySha256))
+        if (ExpectedEntryAssemblySha256 is null)
             return;
+        if (string.IsNullOrWhiteSpace(ExpectedEntryAssemblySha256))
+            throw new ArgumentException(
+                "ExpectedEntryAssemblySha256 must contain exactly 64 hexadecimal characters.",
+                nameof(ExpectedEntryAssemblySha256));
 
         try
         {
