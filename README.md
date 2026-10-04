@@ -1,53 +1,56 @@
 # LumisAPI
 
-LumisAPI is a lightweight game development API for C#.
+LumisAPI は、C# 向けの軽量なゲーム開発 API です。
 
-Build desktop 2D games with a small, documented API backed by
-[raylib-cs](https://github.com/raylib-cs/raylib-cs) and
-[raylib](https://www.raylib.com/).
+[raylib-cs](https://github.com/raylib-cs/raylib-cs) と
+[raylib](https://www.raylib.com/) を基盤に、シンプルでドキュメント化された API から
+デスクトップ向け 2D ゲームを開発できます。
 
-**Version:** 0.1.1 · **License:** MIT · **Library targets:** .NET 8 and .NET 10
+**バージョン:** 0.1.1 · **ライセンス:** MIT · **ライブラリ対象:** .NET 8 / .NET 10
 
-The library targets `net8.0` and `net10.0`. Building this repository requires
-the .NET 10 SDK selected by `global.json`. The sample and native smoke checks
-run on .NET 10; the unit tests run on .NET 8 and .NET 10.
+ライブラリは `net8.0` と `net10.0` を対象としています。
+このリポジトリのビルドには、`global.json` で指定された .NET 10 SDK が必要です。
+サンプルとネイティブ smoke test は .NET 10、ユニットテストは .NET 8 と .NET 10 の両方で実行します。
 
-The public configuration API is verified with a dedicated C# 8 consumer build,
-while the .NET 10 build covers the current C# toolchain. This means projects
-using C# 8 through C# 14 can consume LumisAPI as long as they target a compatible
-runtime. The minimum runtime remains .NET 8 because Raylib-cs 8.1.0 targets
-.NET 8 and .NET 10.
+公開設定 API は専用の C# 8 consumer build でも検証し、
+.NET 10 ビルドでは現在の C# ツールチェーンも検証しています。
+そのため、互換ランタイムを対象にしていれば、C# 8 から C# 14 までのプロジェクトから
+LumisAPI を利用できます。
 
-The repository includes local packaging and a
-[NuGet release workflow](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/docs/publishing.md).
+最小ランタイムは .NET 8 のままです。
+これは Raylib-cs 8.1.0 が .NET 8 と .NET 10 を対象としているためです。
 
-## Features
+このリポジトリにはローカルパッケージ作成機能と
+[NuGet 公開ワークフロー](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/docs/publishing.md)
+も含まれています。
 
-- Window / Game Loop — resizable window, frame pacing, delta time, orderly shutdown
-- 2D Rendering — shapes, text, textures, tinting, scaling, rotation, screenshots
-- Input — keyboard and mouse held / pressed / released states
-- Audio — sound effects, streamed music, playback controls and volume
-- Scene Management — scene lifecycle callbacks and deferred transitions
-- Anti-Cheat Level 1 — process / Cheat Engine / debugger detection at startup and runtime
-- Anti-Cheat Level 2 — tamper-detecting `SecureInt`, `SecureLong`, `SecureFloat`, and `SecureDouble`
-- Anti-Cheat Level 3 — SpeedHack / game-time acceleration detection
-- Anti-Cheat Level 4 — SHA-256 file integrity verification for game data and assets
-- Anti-Cheat Level 5 — authenticated save-data protection and entry-assembly integrity monitoring
-- Automatic cleanup of textures and audio resources, with game-thread checks
-- XML API documentation included in the NuGet package
+## 主な機能
 
-## Installation
+- ウィンドウ / ゲームループ — リサイズ可能なウィンドウ、フレーム制御、delta time、安全な終了処理
+- 2D 描画 — 図形、テキスト、テクスチャ、色調変更、拡大縮小、回転、スクリーンショット
+- 入力 — キーボード / マウスの押下中・押した瞬間・離した瞬間の取得
+- オーディオ — 効果音、ストリーミング音楽、再生制御、音量調整
+- シーン管理 — シーンのライフサイクルコールバックと遅延シーン遷移
+- アンチチート Level 1 — 起動時 / 実行中のプロセス、Cheat Engine、デバッガ検出
+- アンチチート Level 2 — 改ざん検出付き `SecureInt` / `SecureLong` / `SecureFloat` / `SecureDouble`
+- アンチチート Level 3 — SpeedHack / ゲーム時間加速の検出
+- アンチチート Level 4 — ゲームデータ / アセットの SHA-256 ファイル整合性検証
+- アンチチート Level 5 — 認証付きセーブデータ保護とエントリアセンブリ整合性監視
+- テクスチャ / オーディオリソースの自動解放とゲームスレッド検証
+- NuGet パッケージへの XML API ドキュメント同梱
 
-Add LumisAPI to a .NET 8 or .NET 10 project:
+## インストール
+
+.NET 8 または .NET 10 のプロジェクトに LumisAPI を追加します。
 
 ```sh
 dotnet add package LumisAPI --version 0.1.1
 ```
 
-## Quick start
+## クイックスタート
 
-Install the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0),
-then run from the repository root:
+[.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) をインストールし、
+リポジトリのルートで以下を実行します。
 
 ```sh
 dotnet restore LumisAPI.sln
@@ -55,14 +58,21 @@ dotnet build LumisAPI.sln -c Release --no-restore
 dotnet run --project samples/HelloLumis -c Release --no-build
 ```
 
-The sample includes its own PNG and WAV assets. Use **WASD / arrow keys** to
-move, **left click** to move to the pointer, **Space** to play a sound,
-**M** to toggle music, **Tab** to change scenes, and **Escape** to exit.
-If no audio device is available, pass `-- --no-audio` to `dotnet run`.
+サンプルには PNG / WAV アセットが含まれています。
 
-## Example
+- **WASD / 矢印キー**: 移動
+- **左クリック**: マウスポインタ位置へ移動
+- **Space**: 効果音再生
+- **M**: 音楽の再生 / 停止
+- **Tab**: シーン切り替え
+- **Escape**: 終了
 
-Replace the contents of a console project's `Program.cs` with:
+オーディオデバイスがない環境では、`dotnet run` に
+`-- --no-audio` を追加してください。
+
+## 基本例
+
+コンソールプロジェクトの `Program.cs` を次の内容に置き換えます。
 
 ```csharp
 using System.Numerics;
@@ -95,17 +105,28 @@ public class Game : LumisGame
 }
 ```
 
-## Anti-cheat Levels 1–5
+## アンチチート Level 1〜5
 
-Anti-cheat is disabled by default. Enable only the layers your game needs.
-LumisAPI keeps the checks in user mode and preserves normal cleanup when a
-runtime violation stops the game.
+アンチチートはデフォルトでは無効です。
+ゲームで必要なレベルだけ有効化してください。
 
-### Level 1 — process, Cheat Engine and debugger detection
+LumisAPI のアンチチートはユーザーモードで動作し、
+実行中に違反を検出してゲームを停止する場合でも、通常のクリーンアップ処理を維持します。
 
-Level 1 checks before the native window opens and can continue scanning while
-the game is running. The Cheat Engine matcher uses process names plus executable
-path and version metadata when the operating system allows access.
+### Level 1 — プロセス / Cheat Engine / デバッガ検出
+
+Level 1 はネイティブウィンドウを開く前に検査を行い、
+設定に応じてゲーム実行中も定期的に再スキャンします。
+
+Cheat Engine の検出では、OS から取得できる場合に以下を利用します。
+
+- プロセス名
+- 実行ファイルパス
+- ProductName
+- FileDescription
+- OriginalFilename
+- 任意の禁止プロセス名
+- 任意の禁止実行パス断片
 
 ```csharp
 AntiCheat = new AntiCheatSettings
@@ -127,14 +148,16 @@ AntiCheat = new AntiCheatSettings
 }
 ```
 
-Windows additionally uses `IsDebuggerPresent`; Linux checks `TracerPid`.
-macOS currently uses the managed debugger signal. Debugger detection is opt-in
-so normal development is not blocked.
+Windows では追加で `IsDebuggerPresent`、
+Linux では `TracerPid` を利用します。
+macOS では現在、マネージドデバッガの状態を利用します。
 
-### Level 2 — protected numeric values
+通常の開発やデバッグを妨げないよう、デバッガ検出は明示的に有効化する方式です。
 
-Use the secure numeric wrappers for values such as money, health, score or
-experience that are common memory-edit targets.
+### Level 2 — 保護された数値型
+
+所持金、HP、スコア、経験値など、
+メモリエディタの対象になりやすい値には Secure 系の数値型を利用できます。
 
 ```csharp
 var money = new SecureInt(1000);
@@ -145,15 +168,22 @@ var multiplier = new SecureDouble(1.25);
 money.Value += 500;
 ```
 
-The stored representation is obfuscated with a per-write random key and carries
-an integrity tag. A failed integrity check throws `AntiCheatException` with
-`MemoryTampering`. These values are anti-tamper primitives, not secret storage.
+保存される値は、書き込みごとに生成されるランダムキーで難読化され、
+さらに整合性タグを保持します。
 
-### Level 3 — SpeedHack / time manipulation
+整合性検証に失敗した場合は、
+`MemoryTampering` を持つ `AntiCheatException` が発生します。
 
-Level 3 compares accumulated game delta time with an independent monotonic
-clock. It requires multiple suspicious observation windows by default to reduce
-false positives from normal frame stalls.
+これらはメモリ改ざん対策用の仕組みであり、
+秘密情報そのものを安全に保存するための暗号化ストレージではありません。
+
+### Level 3 — SpeedHack / 時間改変検出
+
+Level 3 では、ゲーム側で積算した delta time と
+独立した単調増加時計を比較します。
+
+通常のフレーム落ちや一時的な停止による誤検知を抑えるため、
+デフォルトでは複数の観測期間で連続して異常が確認された場合に検出します。
 
 ```csharp
 TimeManipulation = new TimeManipulationSettings
@@ -165,14 +195,15 @@ TimeManipulation = new TimeManipulationSettings
 }
 ```
 
-A tool that also successfully manipulates or hides the underlying monotonic
-clock can bypass this layer, so it should be combined with the other levels.
+単調増加時計そのものを正しく改変・隠蔽できる高度なツールまでは防げないため、
+他のアンチチートレベルと組み合わせて使用してください。
 
-### Level 4 — file integrity
+### Level 4 — ファイル整合性
 
-Enable file integrity, then register trusted files before calling `Run()`.
-A build-time SHA-256 value is stronger than taking a snapshot from the local
-machine at startup.
+ファイル整合性を有効にし、`Run()` を呼び出す前に保護対象を登録します。
+
+ローカルの現在状態を基準にするより、
+ビルド時に生成した信頼済み SHA-256 を指定する方が強い検証になります。
 
 ```csharp
 AntiCheat = new AntiCheatSettings
@@ -186,21 +217,25 @@ AntiCheat = new AntiCheatSettings
     }
 };
 
-// In the derived game constructor, after the base constructor:
+// 派生ゲームのコンストラクタで、base コンストラクタ呼び出し後に登録:
 AntiCheat.FileIntegrity.RegisterFile(
     "data/items.json",
     "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF");
 
-// Or use the current file as the baseline:
+// 現在のファイルを基準値として使用する場合:
 AntiCheat.FileIntegrity.RegisterCurrentFile("assets/player.png");
 ```
 
-`RegisterDirectorySnapshot` can baseline a directory. Snapshot mode detects
-later changes but cannot prove the files were trustworthy before registration.
+`RegisterDirectorySnapshot` を使用すると、
+ディレクトリ内のファイルをまとめて基準値として登録できます。
 
-### Level 5 — save-data and executable integrity
+スナップショット方式は「登録後に変更されたか」は検出できますが、
+登録前から改ざんされていたファイルが正しいものかどうかまでは証明できません。
 
-`SaveDataProtector` uses AES-256-GCM, so edited save data fails authentication.
+### Level 5 — セーブデータ / 実行ファイル整合性
+
+`SaveDataProtector` は AES-256-GCM を使用します。
+そのため、保護済みセーブデータを書き換えると認証検証に失敗します。
 
 ```csharp
 byte[] key = SaveDataProtector.GenerateKey();
@@ -210,11 +245,14 @@ string protectedSave = saves.ProtectString(json);
 string restoredJson = saves.UnprotectString(protectedSave);
 ```
 
-Keep the key outside user-editable save data. A key embedded entirely in a
-client can eventually be extracted by a determined attacker; a launcher,
-platform-protected secret or server-provided key is stronger.
+キーはユーザーが編集できるセーブデータとは別に管理してください。
 
-Entry-assembly integrity can also be monitored:
+クライアント内に完全に埋め込まれたキーは、
+十分な解析能力を持つ攻撃者には最終的に抽出される可能性があります。
+可能であれば、ランチャー、OS / プラットフォーム側の保護領域、
+またはサーバーから提供されるキーの方が強い方式です。
+
+エントリアセンブリ自体の整合性も監視できます。
 
 ```csharp
 AssemblyIntegrity = new AssemblyIntegritySettings
@@ -226,26 +264,43 @@ AssemblyIntegrity = new AssemblyIntegritySettings
 }
 ```
 
-If no trusted hash is supplied, LumisAPI snapshots the entry assembly on the
-first check and can detect later on-disk changes only. Single-file deployments
-may not expose an assembly path; `FailIfUnavailable` controls that behavior.
+信頼済みハッシュを指定しない場合、
+LumisAPI は最初の検査時点のエントリアセンブリを基準値として使用します。
+この場合、検出できるのは基準値取得後のディスク上の変更だけです。
 
-### Violation behavior and limits
+single-file publish などではアセンブリパスを取得できない場合があります。
+その際にエラーとするかどうかは `FailIfUnavailable` で設定できます。
 
-A service-detected violation raises `AntiCheat.ViolationDetected` immediately
-before throwing `AntiCheatException`. The event and exception identify the
-violation type, startup/runtime phase, and process or file details when known.
-Runtime exceptions pass through the normal Lumis cleanup path.
+### 違反検出時の動作と制限
 
-These five levels substantially raise the cost of casual client-side cheating,
-but they are not kernel anti-cheat and cannot make an untrusted client
-authoritative. Process hiding, code injection, kernel-level manipulation, or a
-fully modified client can still bypass local checks. Networked games should
-validate important state on a trusted server.
+サービス型のアンチチート違反を検出すると、
+`AntiCheatException` を投げる直前に
+`AntiCheat.ViolationDetected` が発生します。
 
-## Install from a local package
+イベントと例外から、以下の情報を取得できます。
 
-Create the package first:
+- 違反の種類
+- 起動時 / 実行中のどちらで検出されたか
+- プロセス名
+- PID
+- 実行ファイルパス
+- 保護対象ファイルパス
+
+実行中に `AntiCheatException` が発生した場合も、
+LumisAPI の通常のクリーンアップ処理を通ってから例外が再送出されます。
+
+この 5 段階のアンチチートは、
+一般的なクライアント改ざんやカジュアルなチートの難易度を大きく上げることを目的としています。
+
+ただし、カーネルレベルのアンチチートではありません。
+プロセス隠蔽、コードインジェクション、カーネルレベルの操作、
+完全に改造されたクライアントなどを完全に防ぐことはできません。
+
+オンラインゲームでは、重要なゲーム状態を信頼できるサーバー側でも検証してください。
+
+## ローカルパッケージからインストール
+
+まずローカル NuGet パッケージを作成します。
 
 ```sh
 dotnet pack src/Lumis/Lumis.csproj -c Release -o artifacts/packages
@@ -255,10 +310,11 @@ dotnet add package LumisAPI --version 0.1.1 --source ../artifacts/packages --no-
 dotnet restore --source ../artifacts/packages --source https://api.nuget.org/v3/index.json
 ```
 
-The raylib-cs dependency is restored from nuget.org. For a consumer outside
-this checkout, use an absolute path to `artifacts/packages`.
+Raylib-cs の依存関係は nuget.org から復元されます。
+このリポジトリ外の consumer から利用する場合は、
+`artifacts/packages` への絶対パスを指定してください。
 
-## Repository layout
+## リポジトリ構成
 
 ```text
 LumisAPI/
@@ -281,10 +337,10 @@ LumisAPI/
 └─ LumisAPI.sln
 ```
 
-## Development
+## 開発
 
-Install the .NET 8 runtime as well as the .NET 10 SDK to run both unit test
-targets. Installing the .NET 8 SDK also supplies that runtime.
+両方のユニットテスト対象を実行するには、
+.NET 10 SDK に加えて .NET 8 ランタイム、または .NET 8 SDK もインストールしてください。
 
 ```sh
 dotnet test LumisAPI.sln -c Release
@@ -293,36 +349,65 @@ dotnet run --project samples/HelloLumis -c Release -- --smoke --no-audio
 dotnet pack src/Lumis/Lumis.csproj -c Release -o artifacts/packages
 ```
 
-Unit tests cover scene transitions, lifetime guards, settings, and anti-cheat
-Levels 1–5 without opening a window. A separate `LangVersion=8.0` consumer project
-guards the public API against accidentally requiring C# 9-or-newer syntax. The sample's `--smoke` mode opens a real
-window, exercises graphics, input polling and scene transitions, and closes
-automatically. Omit `--no-audio` to exercise native audio as well. Add
-`--capture screenshot.png` to save a frame during the smoke run.
+ユニットテストでは、ウィンドウを開かずに以下を検証します。
 
-To verify sequential windows, callback failure recovery, and native cleanup:
+- シーン遷移
+- ライフサイクルガード
+- 設定値検証
+- アンチチート Level 1〜5
+
+また、`LangVersion=8.0` を指定した専用 consumer project により、
+公開 API が誤って C# 9 以降の構文を必須にしていないことを継続的に検証します。
+
+サンプルの `--smoke` モードでは実際のウィンドウを開き、
+描画、入力ポーリング、シーン遷移を実行したあと自動終了します。
+
+オーディオも検証する場合は `--no-audio` を外してください。
+フレームを保存する場合は `--capture screenshot.png` を追加できます。
+
+連続したウィンドウ作成、コールバック失敗時の復旧、
+ネイティブリソースのクリーンアップを検証する場合:
 
 ```sh
 dotnet run --project tests/Lumis.NativeSmoke -c Release -- --no-audio
 ```
 
-Omit `--no-audio` to verify audio resource cleanup as well.
+オーディオリソースのクリーンアップも検証する場合は
+`--no-audio` を外してください。
 
-The CI workflow builds and tests both library targets on Windows, Linux and
-macOS, plus Linux graphics and lifecycle smoke checks under
-Xvfb. Native runtime testing on your target machine is still
-necessary. Desktop runtime assets come from raylib-cs 8.1.0 for `win-x64`,
-`win-x86`, `linux-x64`, `osx-x64`, and `osx-arm64`. This API does not currently
-support browser, mobile, Windows ARM64, or Linux ARM64 deployment.
+CI では Windows / Linux / macOS 上で両ライブラリ対象をビルド・テストし、
+Linux では Xvfb を利用した実グラフィックス / ライフサイクル smoke test も実行します。
 
-- [API and lifecycle guide](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/docs/api.md)
-- [Contributing and keeping main healthy](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/CONTRIBUTING.md)
-- [Packaging and publishing](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/docs/publishing.md)
-- [Local verification results (Japanese)](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/docs/verification.md)
-- [Changelog](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/CHANGELOG.md)
-- [Third-party notices](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/THIRD-PARTY-NOTICES.md)
+ただし、実際の配布対象マシン上でのネイティブ動作確認は引き続き必要です。
 
-## License
+Raylib-cs 8.1.0 のデスクトップ用ランタイムアセットは以下に対応しています。
 
-LumisAPI and the included sample assets are licensed under the [MIT License](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/LICENSE).
-raylib-cs and raylib retain their own zlib licenses and copyright notices.
+- `win-x64`
+- `win-x86`
+- `linux-x64`
+- `osx-x64`
+- `osx-arm64`
+
+現在、以下の配布先は未対応です。
+
+- ブラウザ
+- モバイル
+- Windows ARM64
+- Linux ARM64
+
+## ドキュメント
+
+- [API / ライフサイクルガイド](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/docs/api.md)
+- [コントリビューションガイド / main を正常に保つ方法](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/CONTRIBUTING.md)
+- [パッケージ作成 / 公開手順](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/docs/publishing.md)
+- [ローカル検証結果](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/docs/verification.md)
+- [変更履歴](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/CHANGELOG.md)
+- [サードパーティ通知](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/THIRD-PARTY-NOTICES.md)
+
+## ライセンス
+
+LumisAPI と同梱サンプルアセットは
+[MIT License](https://github.com/hotamachisubaru-git/LumisAPI/blob/main/LICENSE)
+のもとで提供されます。
+
+raylib-cs と raylib には、それぞれの zlib ライセンスと著作権表示が適用されます。
