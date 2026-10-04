@@ -82,6 +82,7 @@ internal static class Program
         Console.WriteLine(secureDouble.Value);
         Console.WriteLine(violationType);
         Console.WriteLine(violationPhase);
-        Console.WriteLine(FileIntegrityService.ComputeSha256);
+        Func<string, string> hashFile = FileIntegrityService.ComputeSha256;
+        Console.WriteLine(hashFile.Method.Name);
     }
 }
