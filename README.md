@@ -28,7 +28,11 @@ The repository includes local packaging and a
 - Input — keyboard and mouse held / pressed / released states
 - Audio — sound effects, streamed music, playback controls and volume
 - Scene Management — scene lifecycle callbacks and deferred transitions
-- Anti-Cheat Level 1 — startup and runtime process monitoring, Cheat Engine name/metadata/path detection, custom block rules, optional debugger detection
+- Anti-Cheat Level 1 — process / Cheat Engine / debugger detection at startup and runtime
+- Anti-Cheat Level 2 — tamper-detecting `SecureInt`, `SecureLong`, `SecureFloat`, and `SecureDouble`
+- Anti-Cheat Level 3 — SpeedHack / game-time acceleration detection
+- Anti-Cheat Level 4 — SHA-256 file integrity verification for game data and assets
+- Anti-Cheat Level 5 — authenticated save-data protection and entry-assembly integrity monitoring
 - Automatic cleanup of textures and audio resources, with game-thread checks
 - XML API documentation included in the NuGet package
 
@@ -91,60 +95,153 @@ public class Game : LumisGame
 }
 ```
 
-## Anti-cheat Level 1
+## Anti-cheat Levels 1–5
 
-Anti-cheat is disabled by default. When enabled, LumisAPI checks before the
-native window opens and can continue checking while the game is running.
+Anti-cheat is disabled by default. Enable only the layers your game needs.
+LumisAPI keeps the checks in user mode and preserves normal cleanup when a
+runtime violation stops the game.
 
-The built-in Cheat Engine detector uses several signals when available:
+### Level 1 — process, Cheat Engine and debugger detection
 
-- common process-name variants such as `cheatengine-x86_64`
-- executable version metadata such as ProductName, FileDescription and OriginalFilename
-- executable path segments such as a default `Cheat Engine 7.5` installation directory
-- custom blocked process names and executable-path fragments
-- optional debugger detection
+Level 1 checks before the native window opens and can continue scanning while
+the game is running. The Cheat Engine matcher uses process names plus executable
+path and version metadata when the operating system allows access.
 
 ```csharp
-public Game() : base(new GameSettings
+AntiCheat = new AntiCheatSettings
 {
-    AntiCheat = new AntiCheatSettings
+    Enabled = true,
+    MonitorDuringGame = true,
+    RuntimeScanInterval = TimeSpan.FromSeconds(2),
+    ProcessDetection = new ProcessDetectionSettings
     {
-        Enabled = true,
-        MonitorDuringGame = true,
-        RuntimeScanInterval = TimeSpan.FromSeconds(2),
-        ProcessDetection = new ProcessDetectionSettings
-        {
-            DetectCheatEngine = true,
-            InspectExecutableMetadata = true,
-            BlockedProcessNames = new[] { "MyGameTrainer" },
-            BlockedExecutablePathFragments = new[] { "tools/trainer" }
-        },
-        DebuggerDetection = new DebuggerDetectionSettings
-        {
-            Enabled = false
-        }
+        DetectCheatEngine = true,
+        InspectExecutableMetadata = true,
+        BlockedProcessNames = new[] { "MyGameTrainer" },
+        BlockedExecutablePathFragments = new[] { "tools/trainer" }
+    },
+    DebuggerDetection = new DebuggerDetectionSettings
+    {
+        Enabled = false
     }
-})
-{
-    AntiCheat.ViolationDetected += (_, violation) =>
-        Console.Error.WriteLine(violation.Message);
 }
 ```
 
-If a violation is found during startup, `Run()` raises
-`AntiCheatService.ViolationDetected` and throws `AntiCheatException` before
-the game window opens. If a runtime scan detects a violation, the same exception
-stops the loop and normal Lumis cleanup still runs before the exception is
-re-thrown.
+Windows additionally uses `IsDebuggerPresent`; Linux checks `TracerPid`.
+macOS currently uses the managed debugger signal. Debugger detection is opt-in
+so normal development is not blocked.
 
-Debugger detection is opt-in so normal development is not blocked. The managed
-debugger signal is portable; native detection is additionally strengthened on
-Windows with `IsDebuggerPresent` and on Linux with `TracerPid`.
+### Level 2 — protected numeric values
 
-This is still a user-mode anti-cheat layer, not a guarantee that the client is
-trusted. A sufficiently modified tool can strip metadata, move paths, hide
-processes, or otherwise bypass client-side checks. Later levels should add value
-integrity, file integrity and server-side validation where applicable.
+Use the secure numeric wrappers for values such as money, health, score or
+experience that are common memory-edit targets.
+
+```csharp
+var money = new SecureInt(1000);
+var experience = new SecureLong(50000);
+var speed = new SecureFloat(4.5f);
+var multiplier = new SecureDouble(1.25);
+
+money.Value += 500;
+```
+
+The stored representation is obfuscated with a per-write random key and carries
+an integrity tag. A failed integrity check throws `AntiCheatException` with
+`MemoryTampering`. These values are anti-tamper primitives, not secret storage.
+
+### Level 3 — SpeedHack / time manipulation
+
+Level 3 compares accumulated game delta time with an independent monotonic
+clock. It requires multiple suspicious observation windows by default to reduce
+false positives from normal frame stalls.
+
+```csharp
+TimeManipulation = new TimeManipulationSettings
+{
+    Enabled = true,
+    ObservationWindow = TimeSpan.FromSeconds(2),
+    MaxGameTimeRatio = 1.75,
+    RequiredConsecutiveDetections = 2
+}
+```
+
+A tool that also successfully manipulates or hides the underlying monotonic
+clock can bypass this layer, so it should be combined with the other levels.
+
+### Level 4 — file integrity
+
+Enable file integrity, then register trusted files before calling `Run()`.
+A build-time SHA-256 value is stronger than taking a snapshot from the local
+machine at startup.
+
+```csharp
+AntiCheat = new AntiCheatSettings
+{
+    Enabled = true,
+    FileIntegrity = new FileIntegritySettings
+    {
+        Enabled = true,
+        CheckOnStartup = true,
+        MonitorDuringGame = true
+    }
+};
+
+// In the derived game constructor, after the base constructor:
+AntiCheat.FileIntegrity.RegisterFile(
+    "data/items.json",
+    "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF");
+
+// Or use the current file as the baseline:
+AntiCheat.FileIntegrity.RegisterCurrentFile("assets/player.png");
+```
+
+`RegisterDirectorySnapshot` can baseline a directory. Snapshot mode detects
+later changes but cannot prove the files were trustworthy before registration.
+
+### Level 5 — save-data and executable integrity
+
+`SaveDataProtector` uses AES-256-GCM, so edited save data fails authentication.
+
+```csharp
+byte[] key = SaveDataProtector.GenerateKey();
+
+using var saves = new SaveDataProtector(key);
+string protectedSave = saves.ProtectString(json);
+string restoredJson = saves.UnprotectString(protectedSave);
+```
+
+Keep the key outside user-editable save data. A key embedded entirely in a
+client can eventually be extracted by a determined attacker; a launcher,
+platform-protected secret or server-provided key is stronger.
+
+Entry-assembly integrity can also be monitored:
+
+```csharp
+AssemblyIntegrity = new AssemblyIntegritySettings
+{
+    Enabled = true,
+    CheckOnStartup = true,
+    MonitorDuringGame = true,
+    ExpectedEntryAssemblySha256 = trustedExeOrDllHash
+}
+```
+
+If no trusted hash is supplied, LumisAPI snapshots the entry assembly on the
+first check and can detect later on-disk changes only. Single-file deployments
+may not expose an assembly path; `FailIfUnavailable` controls that behavior.
+
+### Violation behavior and limits
+
+A service-detected violation raises `AntiCheat.ViolationDetected` immediately
+before throwing `AntiCheatException`. The event and exception identify the
+violation type, startup/runtime phase, and process or file details when known.
+Runtime exceptions pass through the normal Lumis cleanup path.
+
+These five levels substantially raise the cost of casual client-side cheating,
+but they are not kernel anti-cheat and cannot make an untrusted client
+authoritative. Process hiding, code injection, kernel-level manipulation, or a
+fully modified client can still bypass local checks. Networked games should
+validate important state on a trusted server.
 
 ## Install from a local package
 
@@ -197,7 +294,7 @@ dotnet pack src/Lumis/Lumis.csproj -c Release -o artifacts/packages
 ```
 
 Unit tests cover scene transitions, lifetime guards, settings, and anti-cheat
-matching without opening a window. A separate `LangVersion=8.0` consumer project
+Levels 1–5 without opening a window. A separate `LangVersion=8.0` consumer project
 guards the public API against accidentally requiring C# 9-or-newer syntax. The sample's `--smoke` mode opens a real
 window, exercises graphics, input polling and scene transitions, and closes
 automatically. Omit `--no-audio` to exercise native audio as well. Add

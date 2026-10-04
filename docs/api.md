@@ -42,76 +42,95 @@ request a stop; cleanup completes before `Run` returns.
 ## Anti-cheat
 
 Anti-cheat is opt-in through `GameSettings.AntiCheat`. Startup checks execute
-before raylib creates the game window. Runtime monitoring is enabled by default
-after anti-cheat itself is enabled and runs at the configured
-`RuntimeScanInterval` (two seconds by default).
+before raylib creates the game window. Runtime checks execute before user update
+callbacks when their configured scan or observation interval is due.
+
+### Level 1: process and debugger detection
+
+`ProcessDetectionSettings` supports built-in Cheat Engine matching, custom
+process names and custom executable-path fragments. When
+`InspectExecutableMetadata` is enabled, LumisAPI also attempts to inspect the
+process executable path plus ProductName, FileDescription and OriginalFilename.
+Metadata access can be denied by the operating system; inaccessible processes
+are skipped rather than crashing the game.
+
+`DebuggerDetectionSettings.Enabled` is false by default. Managed debugger
+detection is portable. Native checks additionally use `IsDebuggerPresent` on
+Windows and `/proc/self/status` `TracerPid` on Linux.
+
+### Level 2: secure numeric values
+
+`SecureInt`, `SecureLong`, `SecureFloat`, and `SecureDouble` store an
+obfuscated representation instead of the plain numeric bits and verify a keyed
+integrity tag on every read. Assigning `Value` rotates the random key and tag.
+Integrity failure throws `AntiCheatException` with
+`AntiCheatViolationType.MemoryTampering`.
+
+These wrappers make simple memory-search/write attacks harder and detect direct
+corruption of their protected representation. They do not hide secrets from an
+attacker capable of fully reverse engineering and rewriting the client.
+
+### Level 3: time manipulation
+
+`TimeManipulationSettings` compares accumulated frame delta time with a
+monotonic `Stopwatch` clock. The default configuration observes two-second
+windows, allows a 1.75x ratio, and requires two consecutive suspicious windows.
+Only suspicious acceleration is treated as a violation; normal stalls that make
+game time advance more slowly do not trigger this detector.
+
+### Level 4: registered-file integrity
+
+`AntiCheat.FileIntegrity` manages SHA-256 baselines.
 
 ```csharp
-var settings = new GameSettings
-{
-    AntiCheat = new AntiCheatSettings
-    {
-        Enabled = true,
-        MonitorDuringGame = true,
-        RuntimeScanInterval = TimeSpan.FromSeconds(2),
-        ProcessDetection = new ProcessDetectionSettings
-        {
-            DetectCheatEngine = true,
-            InspectExecutableMetadata = true,
-            BlockedProcessNames = new[] { "MyGameTrainer.exe" },
-            BlockedExecutablePathFragments = new[] { "tools/trainer" }
-        },
-        DebuggerDetection = new DebuggerDetectionSettings
-        {
-            Enabled = false
-        }
-    }
-};
+AntiCheat.FileIntegrity.RegisterFile(path, trustedSha256);
+AntiCheat.FileIntegrity.RegisterCurrentFile(otherPath);
+AntiCheat.FileIntegrity.RegisterDirectorySnapshot(assetDirectory, "*.json");
 ```
 
-### Process detection
+`RegisterFile` is the preferred option when a trusted hash is available from
+the build/release pipeline. `RegisterCurrentFile` and
+`RegisterDirectorySnapshot` are runtime snapshots and therefore only prove
+that a file has not changed since registration.
 
-`ProcessDetectionSettings.Enabled` controls process checks.
-`DetectCheatEngine` enables the built-in matcher for common Cheat Engine
-process names. When `InspectExecutableMetadata` is enabled, Lumis also tries to
-read each accessible executable path and version metadata. This can identify
-some renamed executables when fields such as ProductName, FileDescription or
-OriginalFilename still contain Cheat Engine identifiers.
+`FileIntegritySettings.CheckOnStartup` controls the startup check and
+`MonitorDuringGame` controls repeated runtime hashing. Runtime monitoring is
+disabled by default because hashing large assets repeatedly can be expensive.
 
-`BlockedProcessNames` is matched case-insensitively and ignores an optional
-`.exe` suffix. `BlockedExecutablePathFragments` adds case-insensitive path
-fragment matching for game-specific trainers or tools.
+### Level 5: save-data and entry-assembly integrity
 
-Process enumeration works on supported desktop runtimes. Reading another
-process's executable path or version metadata can be denied by the operating
-system; inaccessible metadata is skipped instead of failing the game.
+`SaveDataProtector` uses AES-256-GCM authenticated encryption. `Protect` /
+`Unprotect` work with bytes, while `ProtectString` / `UnprotectString`
+produce Base64 text envelopes. A malformed payload, wrong key or changed
+ciphertext raises `AntiCheatException` with `SaveDataTampering`.
 
-### Debugger detection
+The constructor requires a 32-byte key; `GenerateKey()` creates one. Key
+management remains the application's responsibility. Client-embedded keys can
+be extracted, so server-provided or platform-protected keys are preferable
+where practical.
 
-`DebuggerDetectionSettings.Enabled` is false by default so development builds
-can be debugged normally. When enabled, the managed debugger state can be
-checked on every platform. Native debugger detection is additionally supported
-on Windows through `IsDebuggerPresent` and on Linux through
-`/proc/self/status` `TracerPid`. macOS currently relies on the managed
-debugger signal.
+`AssemblyIntegritySettings` verifies the entry assembly with SHA-256. Supplying
+`ExpectedEntryAssemblySha256` allows the first check to compare with an
+external trusted build hash. Without it, the first check becomes the baseline
+and only later on-disk changes can be detected. `FailIfUnavailable` can make a
+missing assembly path fail closed, but should remain off for deployment modes
+such as single-file publishing where `Assembly.Location` may be empty.
 
 ### Violation behavior
 
-A detected violation raises `AntiCheat.ViolationDetected` immediately before
-throwing `AntiCheatException`. The event and exception report whether the
-violation occurred during startup or runtime and include process name, PID and
-executable path when available.
+Service-detected violations raise `AntiCheat.ViolationDetected` immediately
+before `AntiCheatException` is thrown. The event and exception include the
+startup/runtime phase and process name, PID, executable path or protected file
+path when applicable. Startup violations prevent window/audio initialization.
+Runtime violations travel through the normal `LumisGame` cleanup path.
 
-A startup violation prevents the native window, audio device and `OnLoad()`
-from starting. A runtime violation exits through the normal `LumisGame`
-exception cleanup path, so scenes, resources, audio and the window are still
-cleaned up before the exception is re-thrown.
+Secure numeric and save-data helpers throw `AntiCheatException` directly when
+their local integrity/authentication check fails.
 
-This remains a user-mode defense layer. Renaming plus stripping metadata,
-process hiding, injection techniques and kernel-level attacks can bypass
-client-side checks. Treat it as layered friction rather than proof that a client
-is trustworthy, and add value integrity, file integrity and server-authoritative
-validation in later levels.
+All five levels are user-mode defenses. They are designed to layer multiple
+independent checks against casual and moderately capable client manipulation,
+not to prove a client trustworthy. Server-authoritative validation remains the
+strongest protection for networked game state.
 
 ## Graphics
 

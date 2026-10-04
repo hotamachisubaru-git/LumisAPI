@@ -14,6 +14,10 @@ LumisAPI のすべての主要な変更はここに記録されます。
 - ゲーム固有の禁止プロセス名と実行ファイルパス断片を設定できるブロックルールを追加。
 - オプションのデバッガ検出を追加。Windows は `IsDebuggerPresent`、Linux は `TracerPid` を利用し、その他の環境ではマネージドデバッガ検出を利用。
 - 検出イベントと `AntiCheatException` に起動時/実行時フェーズ、PID、実行ファイルパス情報を追加。
+- アンチチート Level 2 として、ランダムキーによる難読化と整合性タグを備えた `SecureInt` / `SecureLong` / `SecureFloat` / `SecureDouble` を追加。
+- アンチチート Level 3 として、ゲームの delta time と単調増加時計を比較する SpeedHack / 時間加速検出を追加。
+- アンチチート Level 4 として、信頼済み SHA-256 または現在値スナップショットによるファイル/ディレクトリ整合性検証を追加。
+- アンチチート Level 5 として、AES-256-GCM の `SaveDataProtector` とエントリアセンブリ SHA-256 整合性監視を追加。
 
 ## [0.1.1] - 2026-09-28
 
