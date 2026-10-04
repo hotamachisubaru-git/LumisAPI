@@ -19,7 +19,7 @@ public abstract class LumisGame : IDisposable
     private int exitRequested;
 
     /// <summary>Creates a game using the supplied settings or their defaults.</summary>
-    /// <param name="settings">Window and service settings.</param>
+    /// <param name="settings">Window and service settings. Configure them before constructing the game.</param>
     protected LumisGame(GameSettings? settings = null)
     {
         Settings = settings ?? new GameSettings();
@@ -27,9 +27,10 @@ public abstract class LumisGame : IDisposable
         Graphics = new Graphics2D(context);
         Input = new InputState(context);
         Audio = new AudioDevice(context);
+        AntiCheat = new AntiCheatService(Settings.AntiCheat);
     }
 
-    /// <summary>Gets the immutable settings used to create the game.</summary>
+    /// <summary>Gets the settings used by this game.</summary>
     public GameSettings Settings { get; }
 
     /// <summary>Gets the drawing and texture service.</summary>
@@ -40,6 +41,9 @@ public abstract class LumisGame : IDisposable
 
     /// <summary>Gets the sound and streamed music service.</summary>
     public AudioDevice Audio { get; }
+
+    /// <summary>Gets the anti-cheat service used by this game.</summary>
+    public AntiCheatService AntiCheat { get; }
 
     /// <summary>Gets the manager for deferred scene transitions.</summary>
     public SceneManager Scenes { get; } = new();
@@ -54,13 +58,20 @@ public abstract class LumisGame : IDisposable
     public int Height { get { context.EnsureActive(); return Raylib.GetScreenHeight(); } }
 
     /// <summary>Opens the window and blocks until the window closes or <see cref="Exit"/> is called.</summary>
-    /// <remarks>Exceptions from callbacks are rethrown after resources, audio, and the window are cleaned up.</remarks>
+    /// <remarks>
+    /// Enabled anti-cheat startup checks run before the native window is created. When runtime
+    /// monitoring is enabled, anti-cheat checks also run periodically before user update callbacks.
+    /// Exceptions from callbacks are rethrown after resources, audio, and the window are cleaned up.
+    /// </remarks>
     public void Run()
     {
         ObjectDisposedException.ThrowIf(disposed, this);
         EnsureOwnerThread();
         if (hasRun)
             throw new InvalidOperationException("A game instance can only run once.");
+
+        AntiCheat.CheckStartup();
+
         if (Interlocked.CompareExchange(ref runningGame, 1, 0) != 0)
             throw new InvalidOperationException("Only one LumisGame can run at a time.");
 
@@ -96,6 +107,7 @@ public abstract class LumisGame : IDisposable
             while (Volatile.Read(ref exitRequested) == 0 && !Raylib.WindowShouldClose())
             {
                 float deltaTime = Math.Clamp(Raylib.GetFrameTime(), 0f, 0.25f);
+                AntiCheat.Update(deltaTime);
                 Scenes.ApplyPending();
                 Update(deltaTime);
                 Scenes.Update(deltaTime);

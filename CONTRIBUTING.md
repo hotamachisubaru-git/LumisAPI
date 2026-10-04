@@ -10,7 +10,9 @@ Before proposing a change, run:
 
 ```sh
 dotnet restore LumisAPI.sln
+dotnet restore tests/Lumis.CSharp8Consumer/Lumis.CSharp8Consumer.csproj
 dotnet build LumisAPI.sln -c Release --no-restore
+dotnet build tests/Lumis.CSharp8Consumer/Lumis.CSharp8Consumer.csproj -c Release --no-restore
 dotnet test LumisAPI.sln -c Release --no-build
 dotnet run --project samples/HelloLumis -c Release --no-build -- --smoke --no-audio
 dotnet run --project tests/Lumis.NativeSmoke -c Release --no-build -- --no-audio
@@ -21,8 +23,10 @@ For audio changes, also run the sample and native lifecycle checks with audio
 enabled on a desktop with an audio output device. Unit tests do not prove
 native graphics or sound behavior.
 
-Document public members with XML comments. Add tests for behavioral changes,
-describe compatibility changes, and update `CHANGELOG.md`. Do not commit
+Document public members with XML comments. Keep public configuration APIs
+consumable from C# 8 unless a deliberate compatibility break is documented.
+Add tests for behavioral changes, describe compatibility changes, and update
+`CHANGELOG.md`. Do not commit
 build artifacts or API keys.
 
 ## Keeping main usable

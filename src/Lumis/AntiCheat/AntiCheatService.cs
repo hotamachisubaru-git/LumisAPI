@@ -1,0 +1,149 @@
+namespace Lumis;
+
+/// <summary>Runs configured anti-cheat checks for a game and reports detected violations.</summary>
+public sealed class AntiCheatService
+{
+    private readonly AntiCheatSettings settings;
+    private readonly Func<IReadOnlyList<ProcessSnapshot>> runningProcessesProvider;
+    private readonly Func<bool> debuggerAttachedProvider;
+    private readonly TimeManipulationDetector timeManipulationDetector;
+    private readonly AssemblyIntegrityMonitor assemblyIntegrityMonitor;
+    private double runtimeScanAccumulator;
+
+    internal AntiCheatService(AntiCheatSettings settings)
+        : this(
+            settings,
+            () => ProcessDetector.GetRunningProcesses(settings.ProcessDetection),
+            () => DebuggerDetector.IsDebuggerAttached(settings.DebuggerDetection),
+            null)
+    {
+    }
+
+    internal AntiCheatService(
+        AntiCheatSettings settings,
+        Func<IReadOnlyList<ProcessSnapshot>> runningProcessesProvider,
+        Func<bool>? debuggerAttachedProvider = null,
+        Func<double>? monotonicSecondsProvider = null,
+        Func<string?>? entryAssemblyPathProvider = null)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(runningProcessesProvider);
+
+        this.settings = settings;
+        this.runningProcessesProvider = runningProcessesProvider;
+        this.debuggerAttachedProvider = debuggerAttachedProvider ?? (() => false);
+        timeManipulationDetector = new TimeManipulationDetector(settings.TimeManipulation, monotonicSecondsProvider);
+        assemblyIntegrityMonitor = new AssemblyIntegrityMonitor(settings.AssemblyIntegrity, entryAssemblyPathProvider);
+        FileIntegrity = new FileIntegrityService(settings.FileIntegrity);
+    }
+
+    /// <summary>Gets the service used to register files for SHA-256 integrity verification.</summary>
+    public FileIntegrityService FileIntegrity { get; }
+
+    /// <summary>Occurs immediately before an enabled anti-cheat violation aborts startup or runtime execution.</summary>
+    public event EventHandler<AntiCheatViolationEventArgs>? ViolationDetected;
+
+    internal void CheckStartup()
+    {
+        Check(AntiCheatViolationPhase.Startup);
+    }
+
+    internal void Update(float deltaTime)
+    {
+        if (!settings.Enabled || !settings.MonitorDuringGame)
+            return;
+
+        if (settings.TimeManipulation.Enabled && timeManipulationDetector.Observe(deltaTime))
+        {
+            ThrowViolation(new AntiCheatViolationEventArgs(
+                AntiCheatViolationType.TimeManipulation,
+                AntiCheatViolationPhase.Runtime,
+                "Anti-cheat detected suspicious game-time acceleration."));
+        }
+
+        runtimeScanAccumulator += deltaTime;
+        if (runtimeScanAccumulator < settings.RuntimeScanInterval.TotalSeconds)
+            return;
+
+        runtimeScanAccumulator = 0d;
+        Check(AntiCheatViolationPhase.Runtime);
+    }
+
+    private void Check(AntiCheatViolationPhase phase)
+    {
+        if (!settings.Enabled)
+            return;
+
+        if (settings.DebuggerDetection.Enabled && debuggerAttachedProvider())
+        {
+            ThrowViolation(new AntiCheatViolationEventArgs(
+                AntiCheatViolationType.DebuggerAttached,
+                phase,
+                phase == AntiCheatViolationPhase.Startup
+                    ? "Anti-cheat blocked startup because an attached debugger was detected."
+                    : "Anti-cheat stopped the game because an attached debugger was detected."));
+        }
+
+        if (settings.ProcessDetection.Enabled)
+        {
+            ProcessSnapshot? blockedProcess = ProcessDetector.FindBlockedProcess(
+                runningProcessesProvider(),
+                settings.ProcessDetection);
+
+            if (blockedProcess is not null)
+            {
+                ThrowViolation(new AntiCheatViolationEventArgs(
+                    AntiCheatViolationType.BlockedProcess,
+                    phase,
+                    phase == AntiCheatViolationPhase.Startup
+                        ? $"Anti-cheat blocked startup because process '{blockedProcess.Name}' was detected."
+                        : $"Anti-cheat stopped the game because process '{blockedProcess.Name}' was detected.",
+                    blockedProcess.Name,
+                    blockedProcess.Id,
+                    blockedProcess.ExecutablePath));
+            }
+        }
+
+        bool checkFiles =
+            settings.FileIntegrity.Enabled &&
+            ((phase == AntiCheatViolationPhase.Startup && settings.FileIntegrity.CheckOnStartup) ||
+             (phase == AntiCheatViolationPhase.Runtime && settings.FileIntegrity.MonitorDuringGame));
+
+        if (checkFiles)
+        {
+            FileIntegrityFailure? fileFailure = FileIntegrity.Verify();
+            if (fileFailure is not null)
+            {
+                ThrowViolation(new AntiCheatViolationEventArgs(
+                    AntiCheatViolationType.FileIntegrity,
+                    phase,
+                    fileFailure.Message,
+                    filePath: fileFailure.FilePath));
+            }
+        }
+
+        bool checkAssembly =
+            settings.AssemblyIntegrity.Enabled &&
+            ((phase == AntiCheatViolationPhase.Startup && settings.AssemblyIntegrity.CheckOnStartup) ||
+             (phase == AntiCheatViolationPhase.Runtime && settings.AssemblyIntegrity.MonitorDuringGame));
+
+        if (checkAssembly)
+        {
+            AssemblyIntegrityFailure? assemblyFailure = assemblyIntegrityMonitor.Verify();
+            if (assemblyFailure is not null)
+            {
+                ThrowViolation(new AntiCheatViolationEventArgs(
+                    AntiCheatViolationType.AssemblyIntegrity,
+                    phase,
+                    assemblyFailure.Message,
+                    filePath: assemblyFailure.FilePath));
+            }
+        }
+    }
+
+    private void ThrowViolation(AntiCheatViolationEventArgs violation)
+    {
+        ViolationDetected?.Invoke(this, violation);
+        throw new AntiCheatException(violation);
+    }
+}

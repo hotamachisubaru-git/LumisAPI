@@ -25,6 +25,146 @@ public sealed class GameSettingsTests
         Assert.Equal(parameter, failure.ParamName);
     }
 
+    [Fact]
+    public void NullAntiCheatSettingsAreRejected()
+    {
+        var failure = Assert.Throws<ArgumentNullException>(
+            () => new GameSettings { AntiCheat = null! }.Validate());
+
+        Assert.Equal(nameof(GameSettings.AntiCheat), failure.ParamName);
+    }
+
+    [Fact]
+    public void NullProcessDetectionSettingsAreRejected()
+    {
+        var failure = Assert.Throws<ArgumentNullException>(
+            () => new GameSettings
+            {
+                AntiCheat = new AntiCheatSettings { ProcessDetection = null! }
+            }.Validate());
+
+        Assert.Equal(nameof(AntiCheatSettings.ProcessDetection), failure.ParamName);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("bad\0name")]
+    public void InvalidBlockedProcessNamesAreRejected(string processName)
+    {
+        var failure = Assert.Throws<ArgumentException>(
+            () => new GameSettings
+            {
+                AntiCheat = new AntiCheatSettings
+                {
+                    ProcessDetection = new ProcessDetectionSettings
+                    {
+                        BlockedProcessNames = [processName]
+                    }
+                }
+            }.Validate());
+
+        Assert.Equal(nameof(ProcessDetectionSettings.BlockedProcessNames), failure.ParamName);
+    }
+
+    [Fact]
+    public void InvalidRuntimeScanIntervalIsRejected()
+    {
+        var failure = Assert.Throws<ArgumentOutOfRangeException>(
+            () => new GameSettings
+            {
+                AntiCheat = new AntiCheatSettings
+                {
+                    RuntimeScanInterval = TimeSpan.Zero
+                }
+            }.Validate());
+
+        Assert.Equal(nameof(AntiCheatSettings.RuntimeScanInterval), failure.ParamName);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("bad\0path")]
+    public void InvalidBlockedPathFragmentsAreRejected(string fragment)
+    {
+        var failure = Assert.Throws<ArgumentException>(
+            () => new GameSettings
+            {
+                AntiCheat = new AntiCheatSettings
+                {
+                    ProcessDetection = new ProcessDetectionSettings
+                    {
+                        BlockedExecutablePathFragments = new[] { fragment }
+                    }
+                }
+            }.Validate());
+
+        Assert.Equal(nameof(ProcessDetectionSettings.BlockedExecutablePathFragments), failure.ParamName);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void InvalidTimeManipulationObservationWindowIsRejected(int seconds)
+    {
+        var failure = Assert.Throws<ArgumentOutOfRangeException>(
+            () => new GameSettings
+            {
+                AntiCheat = new AntiCheatSettings
+                {
+                    TimeManipulation = new TimeManipulationSettings
+                    {
+                        ObservationWindow = TimeSpan.FromSeconds(seconds)
+                    }
+                }
+            }.Validate());
+
+        Assert.Equal(nameof(TimeManipulationSettings.ObservationWindow), failure.ParamName);
+    }
+
+    [Theory]
+    [InlineData(1.0)]
+    [InlineData(0.5)]
+    [InlineData(double.PositiveInfinity)]
+    public void InvalidTimeManipulationRatioIsRejected(double ratio)
+    {
+        var failure = Assert.Throws<ArgumentOutOfRangeException>(
+            () => new GameSettings
+            {
+                AntiCheat = new AntiCheatSettings
+                {
+                    TimeManipulation = new TimeManipulationSettings
+                    {
+                        MaxGameTimeRatio = ratio
+                    }
+                }
+            }.Validate());
+
+        Assert.Equal(nameof(TimeManipulationSettings.MaxGameTimeRatio), failure.ParamName);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("00")]
+    [InlineData("not-a-hash")]
+    public void InvalidExpectedAssemblyHashIsRejected(string hash)
+    {
+        var failure = Assert.Throws<ArgumentException>(
+            () => new GameSettings
+            {
+                AntiCheat = new AntiCheatSettings
+                {
+                    AssemblyIntegrity = new AssemblyIntegritySettings
+                    {
+                        ExpectedEntryAssemblySha256 = hash
+                    }
+                }
+            }.Validate());
+
+        Assert.Equal(nameof(AssemblyIntegritySettings.ExpectedEntryAssemblySha256), failure.ParamName);
+    }
+
     public static IEnumerable<object[]> InvalidSettings()
     {
         yield return [new GameSettings { Width = 0 }, nameof(GameSettings.Width)];
