@@ -13,8 +13,8 @@ internal static class Program
     {
         Assembly core = typeof(SecureInt).Assembly;
         Check(core.GetName().Name == "Lumis.Security", "standalone assembly");
-        Check(core.GetCustomAttribute<TargetFrameworkAttribute>().FrameworkName == ".NETStandard,Version=v2.1", "netstandard asset selected");
-        Check(!core.GetReferencedAssemblies().Any(a => a.Name.Contains("Raylib") || a.Name.Contains("Unity")), "no engine dependency");
+        Check(core.GetCustomAttribute<TargetFrameworkAttribute>()?.FrameworkName == ".NETStandard,Version=v2.1", "netstandard asset selected");
+        Check(!core.GetReferencedAssemblies().Any(a => a.Name != null && (a.Name.Contains("Raylib") || a.Name.Contains("Unity"))), "no engine dependency");
         var money = new SecureInt(100); money.Value += 50;
         Check(money.Value == 150, "integer arithmetic");
         money.CorruptForTesting();

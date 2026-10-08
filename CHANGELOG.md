@@ -6,6 +6,21 @@ LumisAPI のすべての主要な変更はここに記録されます。
 
 ## [Unreleased]
 
+### Unity / 共通ライブラリ
+
+- アンチチートを raylib 非依存の Lumis.Security に分離。共通 C# 8 ソースを .NET Standard 2.1 / .NET 8 / .NET 10 へビルド。
+- 公開名前空間 Lumis を維持し、Lumis.dll に既存公開型の転送を追加。内部メモリレイアウトの互換性は対象外。
+- Unity 向け UPM パッケージ jp.hotamachi.lumis.security と LumisAntiCheat、ブートストラップ例、EditMode テストを追加。
+- Unity では unscaledDeltaTime とポーズ/フォーカス復帰時の観測リセットを使用。利用不能なプロセス検査は無効化して警告。
+- IL2CPP のエントリアセンブリ探索を自動実行せず、明示的なファイルパスと信頼済み SHA-256 による検証へ対応。
+- URL 形式のアセット用に、取得済みバイト列を検証する FileIntegrityService.VerifyData を追加。非同期ダウンロードはホスト側で実装。
+- Unity / .NET Standard 向けに PortableSaveDataProtector を追加。AES-256-CBC + HMAC-SHA256 の認証付き LSP1 形式を明示使用。
+- 旧 SaveDataProtector の GCM v1 は対応 .NET 8/10 環境で維持し、Unity / .NET Standard では未対応を明示。暗黙の形式変更は行わない。
+- サービス生成時に設定とブロックリストをコピー。Secure 数値型は書き込み前にも既存値の改ざんを検証。
+- .NET Standard DLL の単独実行試験、独立した暗号テストベクトル、公開型転送テスト、Unity 条件付きコンパイル検査を追加。
+- Unity 条件付き検査は API スタブによるもの。Unity Editor / Mono Player / IL2CPP Player の実動作は未検証であることをドキュメントに明記。
+- ローカル/CI で Lumis.Security と LumisAPI の両パッケージを作成し、公開ワークフローは依存パッケージを先に扱うよう更新。今回の変更でリリース・NuGet 公開は行わない。
+
 ### 追加機能
 
 - C# 8 の利用側コードから現在の C# 14 まで扱えるよう、公開設定 API を通常の setter に統一し、`LangVersion=8.0` の互換性ビルドを CI に追加。
