@@ -1,0 +1,8 @@
+{
+  "name": "Lumis.Security.Unity.Tests",
+  "references": ["Lumis.Security", "Lumis.Security.Unity"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "includePlatforms": ["Editor"],
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"],
+  "autoReferenced": false
+}

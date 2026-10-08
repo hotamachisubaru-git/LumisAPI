@@ -36,7 +36,7 @@ jobs:
           }
           $version = & ./.github/scripts/Get-PublishVersion.ps1
           "package_version=$version" >> $env:GITHUB_OUTPUT
-          Write-Host "Publishing LumisAPI $version from $env:GITHUB_REF"
+          Write-Host "Publishing Lumis.Security and LumisAPI $version from $env:GITHUB_REF"
 
   verify:
     name: Verify release
@@ -56,13 +56,16 @@ jobs:
         with:
           name: nuget-packages
           path: artifacts/packages
-      - name: Publish to NuGet
+      - name: Publish dependency before main package
         shell: bash
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
           PACKAGE_VERSION: ${{ needs.validate.outputs.package_version }}
         run: |
-          dotnet nuget push "artifacts/packages/LumisAPI.${PACKAGE_VERSION}.nupkg" \
-            --source https://api.nuget.org/v3/index.json \
-            --api-key "$NUGET_API_KEY" \
-            --skip-duplicate
+          set -euo pipefail
+          for id in Lumis.Security LumisAPI; do
+            dotnet nuget push "artifacts/packages/${id}.${PACKAGE_VERSION}.nupkg" \
+              --source https://api.nuget.org/v3/index.json \
+              --api-key "$NUGET_API_KEY" \
+              --skip-duplicate
+          done

@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'validation/**']
   pull_request:
   workflow_dispatch:
   workflow_call:
@@ -29,9 +29,15 @@ jobs:
       - run: dotnet restore LumisAPI.sln
       - run: dotnet restore tests/Lumis.CSharp8Consumer/Lumis.CSharp8Consumer.csproj
       - run: dotnet build LumisAPI.sln -c Release --no-restore
+      - name: Build independent security including NET Standard 2.1
+        run: dotnet build src/Lumis.Security/Lumis.Security.csproj -c Release
       - name: Verify C# 8 consumer compatibility
         run: dotnet build tests/Lumis.CSharp8Consumer/Lumis.CSharp8Consumer.csproj -c Release --no-restore
       - run: dotnet test LumisAPI.sln -c Release --no-build
+      - name: Run NET Standard security asset without either game engine
+        run: dotnet run --project tests/Lumis.Security.PortableSmoke -c Release
+      - name: Pack shared security dependency
+        run: dotnet pack src/Lumis.Security/Lumis.Security.csproj -c Release --no-build -o ./artifacts/packages
       - run: dotnet pack src/Lumis/Lumis.csproj -c Release --no-build -o ./artifacts/packages
       - uses: actions/upload-artifact@v4
         if: matrix.os == 'ubuntu-latest'
@@ -39,6 +45,22 @@ jobs:
           name: nuget-packages
           path: ./artifacts/packages/*
           if-no-files-found: error
+
+  unity-compile:
+    name: Unity conditional source compile (${{ matrix.profile }}, stubs only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [Editor, WindowsIL2CPP, Android, WebGL]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Compile C# 8 source branches against NET Standard and Unity API stubs
+        run: dotnet build tests/Lumis.UnityCompileCheck/Lumis.UnityCompileCheck.csproj -c Release -p:UnityTestProfile=${{ matrix.profile }}
 
   smoke:
     name: Linux graphics smoke

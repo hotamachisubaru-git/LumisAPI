@@ -1,0 +1,8 @@
+{
+  "name": "Lumis.Security.Unity",
+  "rootNamespace": "Lumis.Unity",
+  "references": ["Lumis.Security"],
+  "autoReferenced": true,
+  "allowUnsafeCode": false,
+  "noEngineReferences": false
+}

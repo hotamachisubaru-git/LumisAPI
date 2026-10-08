@@ -8,7 +8,7 @@
     <PackageId>LumisAPI</PackageId>
     <Version>0.1.1</Version>
     <Authors>LumisAPI contributors</Authors>
-    <Description>A lightweight C# game development API with a window, game loop, 2D rendering, input, audio, and scene management.</Description>
+    <Description>A lightweight C# game development API with shared anti-tamper services.</Description>
     <PackageTags>game;gamedev;2d;graphics;audio;raylib</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -21,6 +21,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Raylib-cs" Version="8.1.0" />
+    <ProjectReference Include="../Lumis.Security/Lumis.Security.csproj" />
     <InternalsVisibleTo Include="Lumis.Tests" />
     <None Include="../../README.md" Pack="true" PackagePath="/" />
     <None Include="../../LICENSE" Pack="true" PackagePath="/" />

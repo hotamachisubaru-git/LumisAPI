@@ -1,0 +1,12 @@
+{
+  "name": "jp.hotamachi.lumis.security",
+  "version": "0.1.0",
+  "displayName": "Lumis Security",
+  "description": "LumisAPI共通のアンチチート補助機能とUnity用ホスト。対応範囲・未検証事項はREADMEを参照してください。",
+  "unity": "2022.3",
+  "author": { "name": "LumisAPI contributors" },
+  "license": "MIT",
+  "samples": [
+    { "displayName": "Bootstrap example", "description": "検査成功後にゲームシーンを読み込む例", "path": "Samples~/Bootstrap" }
+  ]
+}
